@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+  </script>
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {box-sizing: border-box}
+body {font-family: Verdana, sans-serif; margin:0}
+.mySlides {display: none}
+img {vertical-align: middle;}
+
+/* Slideshow container */
+.slideshow-container {
+  max-width: 1000px;
+  position: relative;
+  margin: auto;
+}
+
+/* Next & previous buttons */
+.prev, .next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  padding: 16px;
+  margin-top: -22px;
+  font-weight: bold;
+  font-size: 30px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+}
+
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover, .next:hover {
+  background-color: rgba(0,0,0,0.2);
+}
+
+/* Caption text */
+.text {
+
+  font-size: 15px;
+  padding: 8px 12px;
+  position: absolute;
+  bottom: 8px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Number text (1/3 etc) */
+.numbertext {
+
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+}
+
+/* The dots/bullets/indicators */
+.dot {
+  cursor: pointer;
+  height: 15px;
+  width: 15px;
+  margin: 0 2px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color 0.6s ease;
+}
+
+.active, .dot:hover {
+  background-color: #717171;
+}
+
+/* On smaller screens, decrease text size */
+@media only screen and (max-width: 300px) {
+  .prev, .next,.text {font-size: 11px}
+}
+</style>
+</head>
+<body>
+
+<div class="slideshow-container">
+
+<div class="mySlides fade">
+  <div class="numbertext">1 / 6</div>
+  <img src="fig1.jpg" style="width:100%">
+  <p style="text-align:center">Scottish flag</p>
+  <p style="text-align:center">\begin{align}
+\text{Spec}\begin{pmatrix}
+\cos (2\pi /N) & i/2 & 0 & 0 & \cdots & i/2 \\
+i/2 & \cos(4\pi / N) & i/2 & 0 & \cdots & 0 \\
+0 & i/2 & \cos(6\pi /N) & i/2 & \ddots & 0 \\
+\vdots & \ddots & \ddots & \ddots & \ddots & \vdots \\
+0 & \cdots & 0 & i/2 & \cos(2(N-1)\pi/N) & i/2 \\
+i/2 & 0 & \cdots & 0 & i/2 & \cos(2\pi)
+\end{pmatrix}
+\end{align}</p>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">2 / 6</div>
+  <img src="fig2.jpg" style="width:100%">
+    <p style="text-align:center">Scottish flag</p>
+    <p style="text-align:center">\begin{align}
+\text{Spec}\begin{pmatrix}
+  \cos (2\pi /N) & i/2 & 0 & 0 & \cdots & i/2 \\
+  i/2 & \cos(4\pi / N) & i/2 & 0 & \cdots & 0 \\
+  0 & i/2 & \cos(6\pi /N) & i/2 & \ddots & 0 \\
+  \vdots & \ddots & \ddots & \ddots & \ddots & \vdots \\
+  0 & \cdots & 0 & i/2 & \cos(2(N-1)\pi/N) & i/2 \\
+  i/2 & 0 & \cdots & 0 & i/2 & \cos(2\pi)
+  \end{pmatrix}
+  \end{align}</p>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">3 / 6</div>
+  <img src="fig3.gif" style="width:100%">
+    <p style="text-align:center">Vogel's theorem</p>
+    <p style="text-align:center">$\text{Spec}(\text{Op}_N(\cos(2\pi x) + i \cos (2\pi \xi))+ \delta Q_\omega )$ </p>
+
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">4 / 6</div>
+  <img src="fig5.gif" style="width:100%">
+    <p style="text-align:center">Probabilistic Weyl-law for Toeplitz operator on complex projective space</p>
+    <p style = "text-align:center">$\text{Spec}(T_N(x_1 + i x_2) + \delta Q_\omega )$</p>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">5 / 6</div>
+  <img src="fig6.jpg" style="width:100%">
+
+        <p style="text-align:center">Probabilistic Weyl-law for Toeplitz operator on complex projective space with entires of random matrix uniform(0,1).</p>
+            <p style = "text-align:center">$\text{Spec}(T_N(x_1 + i x_2) + \delta Q_\omega )$</p>
+</div>
+
+
+
+<div class="mySlides fade">
+  <div class="numbertext">6 / 6</div>
+  <img src="fig4.gif" style="width:100%">
+    <p style="text-align:center">Pringle operator</p>
+    <p style="text-align:center">$\text{Spec}(T_N(\cos(t) x_1 + \sin(t) x_1^2 + i x_2) + \delta Q_\omega)$ for $t\in [0,2\pi]$</p>
+</div>
+
+<a class="prev" onclick="plusSlides(-1)">❮</a>
+<a class="next" onclick="plusSlides(1)">❯</a>
+
+</div>
+<br>
+
+<div style="text-align:center">
+  <span class="dot" onclick="currentSlide(1)"></span>
+  <span class="dot" onclick="currentSlide(2)"></span>
+  <span class="dot" onclick="currentSlide(3)"></span>
+  <span class="dot" onclick="currentSlide(4)"></span>
+    <span class="dot" onclick="currentSlide(5)"></span>
+      <span class="dot" onclick="currentSlide(6)"></span>
+</div>
+
+<script>
+let slideIndex = 1;
+showSlides(slideIndex);
+
+function plusSlides(n) {
+  showSlides(slideIndex += n);
+}
+
+function currentSlide(n) {
+  showSlides(slideIndex = n);
+}
+
+function showSlides(n) {
+  let i;
+  let slides = document.getElementsByClassName("mySlides");
+  let dots = document.getElementsByClassName("dot");
+  if (n > slides.length) {slideIndex = 1}
+  if (n < 1) {slideIndex = slides.length}
+  for (i = 0; i < slides.length; i++) {
+    slides[i].style.display = "none";
+  }
+  for (i = 0; i < dots.length; i++) {
+    dots[i].className = dots[i].className.replace(" active", "");
+  }
+  slides[slideIndex-1].style.display = "block";
+  dots[slideIndex-1].className += " active";
+}
+</script>
+
+</body>
+</html>

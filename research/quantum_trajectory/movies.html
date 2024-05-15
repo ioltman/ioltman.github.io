@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<title>Animations</title>
+<meta charset="UTF-8">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto'>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif}
+</style>
+<body class="w3-light-grey">
+
+<!-- Page Container -->
+<div class="w3-content w3-margin-top" style="max-width:1400px;">
+<h1><center>Figures and Animations for quantum trajectories</center></h1>
+  <!-- The Grid -->
+  <div class="w3-row-padding">
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <p>Here are some figures and animations to accompany my paper with <a href="https://math.berkeley.edu/~yonah/">Yonah Borns-Weil</a>, which can be found <a href="https://arxiv.org/abs/2210.03224">here.</a></p>
+        <p>The very basic idea is to show a classical-quantum correspondence of a trajectory of a quantum particle on the one dimensional circle.</p>
+        <p>The quantum particle, which we model by a vector $\psi \in \mathbb C^N$, is repeatedly evolved by one unit of time, then observed. The observed location of the particle is random, depending on $\psi$. The act of observation then changes the state $\psi$.</p>
+          <p>Here I am not specifying what the evolution or observation procedure is, in an effort to be concise. See our paper for precise statements.</p>
+    </div>
+
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\m1.gif" style="width:100%" alt="longpic  ">
+      <h1><center>Single trajectory</h1>
+        <p>Here we begin with an initial state $\psi \in \mathbb C^N$, and demonstrate the evolution procedure for 100 time steps. At each instance in time, the particle is evolved, then observed. We then plot the absolute value of each component of $\psi$.</p>
+    </div>
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\fig_1.jpg" style="width:100%" alt="longpic  ">
+      <h1><center>Main Result</h1>
+        <p>The observed location of the quantum particle at each instance in time is a random variable. Our result shows that this random variable converges, as $N\to \infty$ to the classical trajectory of the particle. To numerically show this result, we simulate the trajectories of many quantum particles, with the exact same initial conditions, and plot the observed locations as a histogram. </p>
+        <p>The quantum evolution and initial state have corresponding classical evolution and initial state. This classical trajectory is plotted in black arrows.</p>
+    </div>
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\m2.gif" style="width:100%" alt="longpic  ">
+      <h1><center>Evolution of $\rm{Op}_N (\cos(2\pi x) + \cos(2 \pi \xi))$</h1>
+        <p>In this, and the next two figures, we demonstrate this classical-quantum correspondence in a different way. We simulate many quantum trajectories, each plotted by a different color line. Then we plot the classical trajectory in a solid black line. The quantum and classical trajectories should agree with each other, up until Ehrenfest time.</p>
+    </div>
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\m5.gif" style="width:100%" alt="longpic  ">
+
+    </div>
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\m3.gif" style="width:100%" alt="longpic  ">
+
+    </div>
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\m4.gif" style="width:100%" alt="longpic  ">
+
+    </div>
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <h1><center>Chaotic Systems</h1>
+        <p>We may also evolve our classical particle by a $2\times 2$ matrix, and construct a corresponding operator on the quantum side.</p>
+        <p>These quantum trajectories disassociate much faster from their classical trajectories than in the above numerics.</p>
+        <p>We show how the Lyapunov exponent of the $2 \times 2$ matrix will dictate how long the quantum and classical trajectories coincide.</p>
+      <img src="movies\fig_5.jpg" style="width:100%" alt="longpic  ">
+      <p>In each row, we run three separate numerical experiments. In each case, we evolve quantum particles by quantizations of matrices with three different Lyapunov exponents. We plot a histogram of the observed position of quantum particles for four time steps, and the classical particle distribution.</p>
+
+    </div>
+
+
+
+  </div>
+
+  <!-- End Page Container -->
+</div>
+
+
+
+
+</body>
+</html>

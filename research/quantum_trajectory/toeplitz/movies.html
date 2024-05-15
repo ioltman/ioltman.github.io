@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<title>Animations</title>
+<meta charset="UTF-8">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Roboto'>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+html,body,h1,h2,h3,h4,h5,h6 {font-family: "Roboto", sans-serif}
+</style>
+<body class="w3-light-grey">
+
+<!-- Page Container -->
+<div class="w3-content w3-margin-top" style="max-width:1400px;">
+<h1><center>Animations of Weyl-Law for Perturbed Berezin<code>&#8212;</code>Toeplitz Operators</center></h1>
+  <!-- The Grid -->
+  <div class="w3-row-padding">
+
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+
+
+        <p>These numerics accompany <a href="https://arxiv.org/abs/2207.09599">this paper (arXiv:2207.09599)</a> proving a probabilistic Weyl law for randomly perturbed Berezin<code>&#8212;</code>Toeplitz operators.</p>
+    </div>
+
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p></p>
+      <img src="movies\m5.gif" style="width:100%" alt="longpic  ">
+      <h1><center>Vogel's theorem example</h1>
+
+        <p>Here the eigenvalues of the Scottish flag operator with a random perturbation are computed for a fixed $N = 1000$. The number of eigenvalues is counted in a rectangular region, which closely matches the predicted Weyl-law proven by Martin Vogel (<a href="https://arxiv.org/abs/1912.08876">Link</a>).</p>
+    </div>
+
+
+
+          <div class="w3-container w3-card w3-white w3-margin-bottom">
+            <p></p>
+            <img src="movies\m1.gif" style="width:100%" alt="longpic  ">
+            <h1><center>Analogue of Scottish Flag Operator</h1>
+
+              <p>This is the spectrum of the Toeplitz quantization of a family of functions on $\mathbb C \mathbb P ^1$. Identifying $\mathbb C \mathbb P ^1$ with the sphere in $\mathbb R^3$ with coordinates $(x_1,x_2,x_3)$. The functions being quantized are $a (x_1^2 + x_1 ) + i x_2$ where $a$ goes between $0$ and $2$, and $N$ is fixed at $100$. </p>
+          </div>
+
+          <div class="w3-container w3-card w3-white w3-margin-bottom">
+            <p></p>
+            <img src="movies\m6.gif" style="width:100%" alt="longpic  ">
+            <h1><center>Probabilistic  Weyl wlaw for $\mathbb{C} \mathbb{P}^1$</h1>
+
+              <p>Here is the analogous numerical experiment as above. Here the eigenvalues of Toeplitz quantization of $x_1 + i x_2$ on the sphere, plus a small random perturbation, are computed. The number of eigenvalues within a circle of growing radius is computed, which closely matches a Weyl-law proven in (<a href="https://arxiv.org/abs/2207.09599">arXiv:2207.09599</a>).</p>
+          </div>
+
+
+
+          <div class="w3-container w3-card w3-white w3-margin-bottom">
+            <p></p>
+            <img src="movies\m2.gif" style="width:100%" alt="longpic  ">
+            <h1><center>Spherical Stretching</h1>
+
+              <p>This is the spectrum of the quantization of $a x_1^2 + x_1 + i x_2$, on $\mathbb C \mathbb P^1$ (with a random perturbation), where $a$ goes between $-1$ and $1$, and $N$ is fixed at $3000$.</p>
+          </div>
+
+
+
+
+
+
+      <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <p></p>
+        <img src="movies\m7.gif" style="width:100%" alt="longpic  ">
+        <h1><center>Spherical Stretching Full Rotation</h1>
+
+          <p>This is the spectrum of a Toeplitz quantization of  $\sin(t) x_1^2 + \cos(t) x_1 + i x_2$ on $\mathbb C \mathbb P^1$ (with a random perturbation), where $t$ goes between $0$ and $ 2 \pi$, and $N$ is fixed at $3000$. This is an inadvertent example of the <a href="https://en.wikipedia.org/wiki/Spinning_dancer">spinning dancer illusion</a>.</p>
+      </div>
+      <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <p></p>
+        <img src="movies\m8.gif" style="width:100%" alt="longpic  ">
+        <h1><center>Spherical Stretching Full Rotation Slowed Down</h1>
+
+          <p>Same as above, but slowed down and for $N = 1000$. Note how the eigenvalues tend to repel each other.</p>
+      </div>
+
+
+
+      <div class="w3-container w3-card w3-white w3-margin-bottom">
+        <p></p>
+        <img src="movies\m3.gif" style="width:100%" alt="longpic  ">
+        <h1><center>Funny Numerical Noise</h1>
+
+          <p>This is the same computation as above, but for a smaller range of $a$ and with no random perturbation added, any perturbation comes from numerical errors in Matlab.</p>
+      </div>
+
+
+
+
+
+  <!-- End Grid -->
+  </div>
+
+  <!-- End Page Container -->
+</div>
+
+
+
+
+</body>
+</html>

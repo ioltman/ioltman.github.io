@@ -96,21 +96,7 @@
         fill(0);
         textSize(12);
 
-        // X-axis ticks
-        for (let i = -2; i <= 2; i++) {
-          let x = map(i, -2, 2, 0, width);
-          line(x, height / 2 + plotOffset - 5, x, height / 2 + plotOffset + 5); // Tick mark
-          textAlign(CENTER, TOP);
-          text(i, x, height / 2 + plotOffset + 8);
-        }
-
-        // Y-axis ticks
-        for (let i = -2; i <= 2; i++) {
-          let y = map(i, -2, 2, height, 0);
-          line(width / 2 - 5, y + plotOffset, width / 2 + 5, y + plotOffset); // Tick mark
-          textAlign(LEFT, CENTER);
-          text(i, width / 2 + 8, y + plotOffset);
-        }
+     
 
         // Get complex data and plot it
         let M1 = jsonData.d1.length;
@@ -136,8 +122,8 @@
           let re = points[i][0];
           let im = points[i][1];
 
-          let x = map(re/2, -2, 2, 0, width);
-          let y = map(im/2, -2, 2, height, 0); // Y-axis is inverted in the canvas
+          let x = map(re, -2, 2, 0, width);
+          let y = map(im, -2, 2, height, 0); // Y-axis is inverted in the canvas
 
           // Apply the vertical offset
           ellipse(x, y + plotOffset, 5, 5);

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Split and Download JSON Chunks</title>
+</head>
+<body>
+  <script>
+    async function loadJSON(file) {
+      const response = await fetch(file);
+      return await response.json();
+    }
+
+    function splitIntoChunks(array, chunkSize) {
+      const chunks = [];
+      for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+      }
+      return chunks;
+    }
+
+    function downloadJSON(data, filename) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Main logic
+    loadJSON("nsa_harper_param.json").then(data => {
+      if (!Array.isArray(data)) {
+        console.error("Expected top-level array in JSON.");
+        return;
+      }
+
+      const chunkSize = 100; // Customize this as needed
+      const chunks = splitIntoChunks(data, chunkSize);
+
+      chunks.forEach((chunk, index) => {
+        const filename = `chunk_${index + 1}.json`;
+        downloadJSON(chunk, filename);
+      });
+    });
+  </script>
+</body>
+</html>

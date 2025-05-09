@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Complex Points Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  </head>
+  <body>
+    <script>
+      let jsonData;
+      let slider1;
+      let slider2;
+      let currentIndex1 = 0;
+      let currentIndex2 = 0;
+
+      function preload() {
+        // Load the JSON file
+        jsonData = loadJSON("output_data.json");
+      }
+
+      function setup() {
+        createCanvas(600, 600);
+        textSize(14);
+
+        // Create slider for time index
+        let M = jsonData.t.length;
+        slider1 = createSlider(0, M - 1, 0, 1);
+        slider1.position(20, 30);
+        slider1.style('width', '560px');
+        slider2 = createSlider(0, jsonData.s.length - 1, 0, 1);
+        slider2.position(20, 70);
+        slider2.style('width', '560px');
+      }
+
+      function draw() {
+        background(250);
+        currentIndex1 = slider1.value();
+        currentIndex2 = slider2.value();
+
+        // Draw axis
+        stroke(180);
+        line(width / 2, 0, width / 2, height); // y-axis
+        line(0, height / 2, width, height / 2); // x-axis
+
+        // Show current t
+        noStroke();
+        fill(0);
+        text(`t = ${jsonData.s[currentIndex1].toFixed(2)}`, 20, 20);
+        text(`s = ${jsonData.s[currentIndex2].toFixed(2)}`, 20, 60);
+        let M = jsonData.t.length;
+        // Get complex data at this t
+        let points = jsonData.data[currentIndex1+M*currentIndex2];
+
+
+        // Plot each point
+        fill(30, 100, 200);
+        noStroke();
+
+        for (let i = 0; i < points.length; i++) {
+          let re = points[i][0];
+          let im = points[i][1];
+
+          // Scale and shift to center
+          let x = map(re, -2, 2, 0, width);   // Adjust range as needed
+          let y = map(im, -2, 2, height, 0);  // Y-axis inverted in canvas
+
+          ellipse(x, y, 5, 5);
+        }
+      }
+    </script>
+  </body>
+</html>

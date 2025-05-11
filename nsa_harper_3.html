@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>non-self-adjoint Harper</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="position: fixed; top: 620px; left: 20px; z-index: 10;">
+  <a href="nsa_harper.html">
+    <button style="padding: 10px 16px; margin-right: 10px; font-size: 14px; border-radius: 6px; border: none; background-color: #2d89ef; color: white; cursor: pointer;">
+      Variable ℜ(λ) and ℑ(λ)
+    </button>
+  </a>
+  <a href="nsa_harper_2.html">
+    <button style="padding: 10px 16px; font-size: 14px; border-radius: 6px; border: none; background-color: #2d89ef; color: white; cursor: pointer;">
+      Variable |λ| and arg(λ)
+    </button>
+  </a>
+</div>
+    <script>
+      let jsonData;
+      let slider1, slider2, slider4, slider6;
+      let label1, label2, label4, label6;
+      let currentIndex1 = 0;
+      let currentIndex2 = 0;
+      let currentIndex3 = 0;
+      let currentIndex4 = 0;
+      let currentIndex5 = 0;
+      let currentIndex6 = 0;
+
+      function preload() {
+        jsonData = loadJSON("larg_mat.json");
+      }
+
+      function setup() {
+        createCanvas(600, 600);
+        textSize(14);
+
+        // Create sliders
+        slider1 = createSlider(0, jsonData.d1.length - 1, Math.floor(3*jsonData.d1.length / 4)-4, 1);
+        slider1.position(700, 50);
+        slider1.style('width', '560px');
+
+        slider2 = createSlider(0, jsonData.d2.length - 1, Math.floor(jsonData.d2.length / 4), 1);
+        slider2.position(700, 110);
+        slider2.style('width', '560px');
+
+    
+
+        // Create labels ABOVE sliders
+        label1 = createDiv();
+        label1.position(700, 30); // 20px above slider1
+
+        label2 = createDiv();
+        label2.position(700, 90); // 20px above slider2
+
+        label4 = createDiv();
+        label4.position(700, 150); // 20px above slider4
+
+        label6 = createDiv();
+        label6.position(700, 210); // 20px above slider6
+      }
+
+      let plotOffset = 50;  // Shift the plot down by 50px
+
+      function draw() {
+        background(250);
+        
+        currentIndex1 = slider1.value();
+        currentIndex2 = slider2.value();
+        
+
+        // Title
+        textSize(16);
+        textAlign(CENTER);
+        text("Spectrum of Op₅₀(cos(p) + λ·cos(z))", width / 2, 20);
+        textSize(14);
+        textAlign(LEFT);
+
+        // Update slider labels dynamically
+        label1.html(`|λ| = ${jsonData.d1[currentIndex1].toFixed(2)}`);
+        label2.html(`arg(λ) = ${jsonData.d2[currentIndex2].toFixed(2)}`);
+
+        // Draw axes with the offset
+        stroke(180);
+        line(width / 2, plotOffset, width / 2, height); // y-axis
+        line(0, height / 2 + plotOffset, width, height / 2 + plotOffset); // x-axis
+
+        // Add tick marks on the axes
+        stroke(0);
+        fill(0);
+        textSize(12);
+
+     
+
+        // Get complex data and plot it
+        let M1 = jsonData.d1.length;
+        let M2 = jsonData.d2.length;
+
+
+        let index = currentIndex1 +
+                    M1 * (currentIndex2 );
+
+        let points = jsonData.data[index];
+
+        // Plot each point with offset
+        fill(30, 100, 200);
+        noStroke();
+
+        for (let i = 0; i < points.length; i++) {
+          let re = points[i][0];
+          let im = points[i][1];
+
+          let x = map(re, -2, 2, 0, width);
+          let y = map(im, -2, 2, height, 0); // Y-axis is inverted in the canvas
+
+          // Apply the vertical offset
+          ellipse(x, y + plotOffset, 5, 5);
+        }
+      }
+    </script>
+  </body>
+</html>

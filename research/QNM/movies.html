@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Animations</title>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+    });
+  </script>
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    html, body, h1, h2, h3, h4, h5, h6 {
+      font-family: "Roboto", sans-serif;
+    }
+    h1 {
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="w3-light-grey">
+
+<!-- Page Container -->
+<div class="w3-content w3-margin-top" style="max-width:1400px;">
+
+  <h1>Figures and Animations for Trace of Wave Propagators</h1>
+
+  <!-- The Grid -->
+  <div class="w3-row-padding">
+
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <p>Here are some figures and animations to accompany my paper with 
+        <a href="https://bpineau2.github.io/">Ben Pineau</a>, which can be found 
+        <a href="https://arxiv.org/abs/2512.16054">here</a>.
+      </p>
+      <p>In the numerics, we consider the one-dimensional wave operator 
+        $\partial_t^2 + P_V$ where $P_V = -\partial_x^2 + V(x)$, with $V(x)$ a real-valued exponentially decaying potential (analytic at infinity).
+      </p>
+      <p>For each potential, we numerically estimate the cosine wave propagator 
+        $U_V(t) := \cos(t \sqrt{P_V})$.
+      </p>
+      <p>We then compute the flat trace of $U_V(t)$ for $t > 0$, that is, 
+        $Tr(U_V(t) - U_0(t))$. If $K(t,x,y)$ is the Schwartz kernel of $U_V(t) - U_0(t)$, then 
+        $Tr(U_V(t) - U_0(t)) = \int_x K(t,x,x)\, dx$.
+      </p>
+      <p>For each potential, we numerically compute $K(t,x,x)$ and $\int_x K(t,x,x)\, dx$.</p>
+      <p>In our paper, we prove that (for $t > 0$)
+        \[
+        Tr(U_V(t) - U_0(t)) = \tfrac{1}{2} \sum_{\lambda_j} e^{-it\lambda_j} + \mathcal{A}_{+}(t) + \mathcal{A}_{-}(t) - \tfrac{1}{2},
+        \]
+        where $\lambda_j$ are the scattering resonances of $P_V$ and $\mathcal{A}_{\pm}(t)$ are functions depending on the exponential decay of $V(x)$.
+      </p>
+    </div>
+
+    <!-- ℓ = 1 -->
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <img src="ell1.gif" style="width:100%" alt="Pöschl–Teller potential ℓ=1">
+      <h1>Pöschl–Teller Potential ($\ell = 1$)</h1>
+      <p>Here we consider the Pöschl–Teller potential 
+        $V_{PT}(x) = (\ell^2 + 1/4) / \cosh(x)^2$ with $\ell = 1$.
+      </p>
+      <p>In this case, the resonances are 
+        $\{\lambda_j^\pm = -i(j + 1/2) \pm \ell : j \in \mathbb{Z}_{\ge 0}\}$.
+      </p>
+      <p>Our theorem (after some algebra) shows that
+        \[
+        Tr(U_V(t) - U_0(t)) = \tfrac{1}{2}\left(\frac{\cos(\ell t) - e^{-t/2}}{\sinh(t/2)} - 1\right).
+        \]
+        This matches the numerically computed curve shown above.
+      </p>
+    </div>
+
+    <!-- ℓ = 3 -->
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <img src="ell3.gif" style="width:100%" alt="Pöschl–Teller potential ℓ=3">
+      <h1>Pöschl–Teller Potential ($\ell = 3$)</h1>
+      <p>Here we consider the Pöschl–Teller potential 
+        $V_{PT}(x) = (\ell^2 + 1/4) / \cosh(x)^2$ with $\ell = 3$.
+      </p>
+      <p>In this case, the resonances are further from the imaginary axis, resulting in more oscillation of the flat trace of the propagator, as seen above.</p>
+    </div>
+
+    <!-- ℓ = 0 -->
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <img src="ell0.gif" style="width:100%" alt="Pöschl–Teller potential ℓ=0">
+      <h1>Pöschl–Teller Potential ($\ell = 0$)</h1>
+      <p>Here we consider the Pöschl–Teller potential 
+        $V_{PT}(x) = (\ell^2 + 1/4) / \cosh(x)^2$ with $\ell = 0$.
+      </p>
+      <p>In this case, the resonances lie along the negative imaginary axis, so there is no oscillation of the flat trace of the propagator, as seen above.</p>
+    </div>
+
+    <!-- Double well -->
+    <div class="w3-container w3-card w3-white w3-margin-bottom">
+      <img src="complicated.gif" style="width:100%" alt="Double Pöschl–Teller potential">
+      <h1>Nonsymmetric Double Pöschl–Teller Potential</h1>
+      <p>Here we consider 
+        $V(x) = \tfrac{1}{4} / \cosh(x-4)^2 + 3 / \cosh(x+4)^2$.
+      </p>
+      <p>In this case, resonances lie closer to the real axis due to the wave slowly escaping the double well, leading to slower decay in the flat trace of the propagator.</p>
+    </div>
+
+  </div>
+  <!-- End Grid -->
+</div>
+<!-- End Page Container -->
+
+</body>
+</html>

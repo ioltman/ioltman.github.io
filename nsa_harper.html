@@ -3,145 +3,226 @@
   <head>
     <meta charset="UTF-8" />
     <title>non-self-adjoint Harper</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="spectrum.js"></script>
     <style>
-      body {
-        font-family: sans-serif;
-      }
+      body { font-family: sans-serif; margin: 20px; }
+      .layout { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
+      #plot { border: 1px solid #ccc; }
+      .controls { min-width: 220px; }
+      .picker-block { margin-bottom: 22px; }
+      .picker-block .picker-title { font-size: 14px; margin-bottom: 4px; }
+      .picker-block .picker-readout { font-size: 13px; color: #333; margin-top: 4px; font-family: monospace; }
+      .picker-block .picker-hint { font-size: 11px; color: #999; }
+      canvas.picker { border: 1px solid #ccc; touch-action: none; cursor: crosshair; }
+      #status { color: #666; font-size: 12px; margin-top: 14px; }
+      label.nctrl { display: block; margin-top: 6px; font-size: 14px; }
+      label.nctrl input[type="range"] { width: 100%; }
     </style>
   </head>
   <body>
-        <!-- Top Navigation Buttons -->
-<div style="position: fixed; top: 620px; left: 20px; z-index: 10;">
-  <a href="nsa_harper_2.html">
-    <button style="padding: 10px 16px; margin-right: 10px; font-size: 14px; border-radius: 6px; border: none; background-color: #2d89ef; color: white; cursor: pointer;">
-      Variable |λ| and arg(λ)
-    </button>
-  </a>
-  <a href="nsa_harper_3.html">
-    <button style="padding: 10px 16px; font-size: 14px; border-radius: 6px; border: none; background-color: #2d89ef; color: white; cursor: pointer;">
-      Fixed p₀ and ζ₀
-    </button>
-  </a>
-</div>
+    <h2 id="title">Spectrum of Op<sub>N</sub>(cos(p+p&#8320;) + &lambda;&middot;cos(z+&zeta;&#8320;))</h2>
+    <div class="layout">
+      <canvas id="plot" width="560" height="560"></canvas>
+      <div class="controls">
+        <div class="picker-block">
+          <div class="picker-title">&lambda; (coupling)</div>
+          <canvas class="picker" id="pickerLambda" width="180" height="180"></canvas>
+          <div class="picker-readout" id="readoutLambda"></div>
+        </div>
+        <div class="picker-block">
+          <div class="picker-title">p&#8320; (quasi-momentum)</div>
+          <canvas class="picker" id="pickerP0" width="180" height="180"></canvas>
+          <div class="picker-readout" id="readoutP0"></div>
+        </div>
+        <div class="picker-block">
+          <div class="picker-title">&zeta;&#8320; (Bloch phase)</div>
+          <canvas class="picker" id="pickerX0" width="180" height="180"></canvas>
+          <div class="picker-readout" id="readoutX0"></div>
+        </div>
+        <label class="nctrl">N = <span id="valN"></span>
+          <input type="range" id="N" min="5" max="200" step="1" value="50" />
+        </label>
+        <div id="status"></div>
+      </div>
+    </div>
     <script>
-      let jsonData;
-      let slider1, slider2, slider4, slider6;
-      let label1, label2, label4, label6;
-      let currentIndex1 = 0;
-      let currentIndex2 = 0;
-      let currentIndex3 = 0;
-      let currentIndex4 = 0;
-      let currentIndex5 = 0;
-      let currentIndex6 = 0;
+      // --- Draggable complex-plane picker: click/drag sets Re (x) and Im (y). ---
+      function makePicker(canvas, { reRange, imRange, value, color, onChange }) {
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        const [reMin, reMax] = reRange;
+        const [imMin, imMax] = imRange;
+        let v = { re: value.re, im: value.im };
 
-      function preload() {
-        jsonData = loadJSON("nsa_harper_param.json");
-      }
-
-      function setup() {
-        createCanvas(600, 600);
-        textSize(14);
-
-        // Create sliders
-        slider1 = createSlider(0, jsonData.d1.length - 1, Math.floor(jsonData.d1.length / 2), 1);
-        slider1.position(700, 50);
-        slider1.style('width', '560px');
-
-        slider2 = createSlider(0, jsonData.d2.length - 1, jsonData.d2.length - 1, 1);
-        slider2.position(700, 110);
-        slider2.style('width', '560px');
-
-        slider4 = createSlider(0, jsonData.d4.length - 1, Math.floor(jsonData.d4.length / 2), 1);
-        slider4.position(700, 170);
-        slider4.style('width', '560px');
-
-        slider6 = createSlider(0, jsonData.d6.length - 1, Math.floor(jsonData.d6.length / 2), 1);
-        slider6.position(700, 230);
-        slider6.style('width', '560px');
-
-        // Create labels ABOVE sliders
-        label1 = createDiv();
-        label1.position(700, 30); // 20px above slider1
-
-        label2 = createDiv();
-        label2.position(700, 90); // 20px above slider2
-
-        label4 = createDiv();
-        label4.position(700, 150); // 20px above slider4
-
-        label6 = createDiv();
-        label6.position(700, 210); // 20px above slider6
-      }
-
-      let plotOffset = 50;  // Shift the plot down by 50px
-
-      function draw() {
-        background(250);
-        
-        currentIndex1 = slider1.value();
-        currentIndex2 = slider2.value();
-        currentIndex3 = 0;
-        currentIndex4 = slider4.value();
-        currentIndex5 = 0;
-        currentIndex6 = slider6.value();
-
-        // Title
-        textSize(16);
-        textAlign(CENTER);
-        text("Spectrum of Op₅₀(cos(p + p₀) + λ·cos(z + ζ₀))", width / 2, 20);
-        textSize(14);
-        textAlign(LEFT);
-
-        // Update slider labels dynamically
-        label1.html(`ℜ(λ) = ${jsonData.d2[currentIndex1].toFixed(2)}`);
-        label2.html(`ℑ(λ) = ${jsonData.d2[currentIndex2].toFixed(2)}`);
-        label4.html(`ℑ(p₀) = ${jsonData.d2[currentIndex4].toFixed(2)}`);
-        label6.html(`ℑ(ζ₀) = ${jsonData.d2[currentIndex6].toFixed(2)}`);
-
-        // Draw axes with the offset
-        stroke(180);
-        line(width / 2, plotOffset, width / 2, height); // y-axis
-        line(0, height / 2 + plotOffset, width, height / 2 + plotOffset); // x-axis
-
-        // Add tick marks on the axes
-        stroke(0);
-        fill(0);
-        textSize(12);
-
-       
-
-        // Get complex data and plot it
-        let M1 = jsonData.d1.length;
-        let M2 = jsonData.d2.length;
-        let M3 = 1;
-        let M4 = jsonData.d4.length;
-        let M5 = 1;
-
-        let index = currentIndex1 +
-                    M1 * (currentIndex2 +
-                    M2 * (currentIndex3 +
-                    M3 * (currentIndex4 +
-                    M4 * (currentIndex5 +
-                    M5 * (currentIndex6)))));
-
-        let points = jsonData.data[index];
-
-        // Plot each point with offset
-        fill(30, 100, 200);
-        noStroke();
-
-        for (let i = 0; i < points.length; i++) {
-          let re = points[i][0];
-          let im = points[i][1];
-
-          let x = map(re, -2, 2, 0, width);
-          let y = map(im, -2, 2, height, 0); // Y-axis is inverted in the canvas
-
-          // Apply the vertical offset
-          ellipse(x, y + plotOffset, 5, 5);
+        function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+        function toPixel(re, im) {
+          return [((re - reMin) / (reMax - reMin)) * W, H - ((im - imMin) / (imMax - imMin)) * H];
         }
+        function toValue(x, y) {
+          return {
+            re: clamp(reMin + (x / W) * (reMax - reMin), reMin, reMax),
+            im: clamp(imMin + ((H - y) / H) * (imMax - imMin), imMin, imMax),
+          };
+        }
+
+        function draw() {
+          ctx.clearRect(0, 0, W, H);
+          ctx.strokeStyle = '#eee';
+          ctx.lineWidth = 1;
+          const midRe = (reMin + reMax) / 2, midIm = (imMin + imMax) / 2;
+          const [mx] = toPixel(midRe, 0);
+          const [, my] = toPixel(0, midIm);
+          ctx.strokeStyle = '#999';
+          ctx.beginPath();
+          const [zx, zy] = toPixel(0, 0);
+          if (zx >= 0 && zx <= W) { ctx.moveTo(zx, 0); ctx.lineTo(zx, H); }
+          if (zy >= 0 && zy <= H) { ctx.moveTo(0, zy); ctx.lineTo(W, zy); }
+          ctx.stroke();
+
+          const [px, py] = toPixel(v.re, v.im);
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = 'white';
+          ctx.stroke();
+        }
+
+        let dragging = false;
+        function pos(e) {
+          const rect = canvas.getBoundingClientRect();
+          return [(e.clientX - rect.left) * (W / rect.width), (e.clientY - rect.top) * (H / rect.height)];
+        }
+        function handle(e) {
+          const [x, y] = pos(e);
+          v = toValue(x, y);
+          draw();
+          onChange(v.re, v.im);
+        }
+        canvas.addEventListener('pointerdown', (e) => {
+          dragging = true;
+          canvas.setPointerCapture(e.pointerId);
+          handle(e);
+        });
+        canvas.addEventListener('pointermove', (e) => { if (dragging) handle(e); });
+        canvas.addEventListener('pointerup', () => { dragging = false; });
+        canvas.addEventListener('pointercancel', () => { dragging = false; });
+
+        draw();
+        return {
+          setValue(re, im) { v = { re, im }; draw(); },
+          getValue() { return v; },
+        };
       }
+
+      function fmtC(re, im) {
+        return re.toFixed(2) + (im >= 0 ? ' + ' : ' - ') + Math.abs(im).toFixed(2) + 'i';
+      }
+
+      const state = {
+        lambdaRe: 0.5, lambdaIm: 0.3,
+        p0Re: 0, p0Im: 0,
+        x0Re: 0, x0Im: 0,
+      };
+
+      const readoutLambda = document.getElementById('readoutLambda');
+      const readoutP0 = document.getElementById('readoutP0');
+      const readoutX0 = document.getElementById('readoutX0');
+
+      const PI = Math.PI;
+      makePicker(document.getElementById('pickerLambda'), {
+        reRange: [-2, 2], imRange: [-2, 2],
+        value: { re: state.lambdaRe, im: state.lambdaIm },
+        color: 'rgb(30,100,200)',
+        onChange(re, im) {
+          state.lambdaRe = re; state.lambdaIm = im;
+          readoutLambda.textContent = 'λ = ' + fmtC(re, im);
+          scheduleUpdate();
+        },
+      });
+      makePicker(document.getElementById('pickerP0'), {
+        reRange: [-PI, PI], imRange: [-PI, PI],
+        value: { re: state.p0Re, im: state.p0Im },
+        color: 'rgb(216,90,48)',
+        onChange(re, im) {
+          state.p0Re = re; state.p0Im = im;
+          readoutP0.textContent = 'p₀ = ' + fmtC(re, im);
+          scheduleUpdate();
+        },
+      });
+      makePicker(document.getElementById('pickerX0'), {
+        reRange: [-PI, PI], imRange: [-PI, PI],
+        value: { re: state.x0Re, im: state.x0Im },
+        color: 'rgb(99,153,34)',
+        onChange(re, im) {
+          state.x0Re = re; state.x0Im = im;
+          readoutX0.textContent = 'ζ₀ = ' + fmtC(re, im);
+          scheduleUpdate();
+        },
+      });
+      readoutLambda.textContent = 'λ = ' + fmtC(state.lambdaRe, state.lambdaIm);
+      readoutP0.textContent = 'p₀ = ' + fmtC(state.p0Re, state.p0Im);
+      readoutX0.textContent = 'ζ₀ = ' + fmtC(state.x0Re, state.x0Im);
+
+      const nSlider = document.getElementById('N');
+      const canvas = document.getElementById('plot');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const status = document.getElementById('status');
+      const title = document.getElementById('title');
+
+      let pending = false;
+      function scheduleUpdate() {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => { pending = false; update(); });
+      }
+
+      function update() {
+        const N = parseInt(nSlider.value, 10);
+        document.getElementById('valN').textContent = N;
+        title.innerHTML = 'Spectrum of Op<sub>' + N + '</sub>(cos(p+p&#8320;) + &lambda;&middot;cos(z+&zeta;&#8320;))';
+
+        const { roots, elapsedMs } = SpectrumSolver.computeSpectrum({
+          N,
+          lambdaRe: state.lambdaRe, lambdaIm: state.lambdaIm,
+          p0Re: state.p0Re, p0Im: state.p0Im,
+          x0Re: state.x0Re, x0Im: state.x0Im,
+        });
+
+        let maxAbs = 1;
+        for (const z of roots) maxAbs = Math.max(maxAbs, Math.hypot(z.re, z.im));
+        const R = maxAbs * 1.15;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.strokeStyle = '#ccc';
+        ctx.beginPath();
+        ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H);
+        ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#666';
+        ctx.font = '11px sans-serif';
+        ctx.fillText((-R).toFixed(2), 4, H / 2 - 4);
+        ctx.fillText(R.toFixed(2), W - 30, H / 2 - 4);
+        ctx.fillText(R.toFixed(2) + 'i', W / 2 + 4, 12);
+        ctx.fillText((-R).toFixed(2) + 'i', W / 2 + 4, H - 4);
+
+        ctx.fillStyle = 'rgb(30,100,200)';
+        for (const z of roots) {
+          const x = ((z.re + R) / (2 * R)) * W;
+          const y = H - ((z.im + R) / (2 * R)) * H;
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+
+        status.textContent = N + ' eigenvalues computed in ' + elapsedMs.toFixed(1) + ' ms';
+      }
+
+      nSlider.addEventListener('input', scheduleUpdate);
+      update();
     </script>
   </body>
 </html>

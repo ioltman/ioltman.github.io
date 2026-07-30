@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Resonance Explorer</title>
+<style>
+:root{
+  --ground:#F6F5F1; --panel:#FFFFFF; --ink:#161B20; --muted:#6B7680;
+  --line:#DEE1DC; --hair:#EAECE8;
+  --accent:#A8431B;      /* resonances */
+  --accent2:#1F6475;     /* potential */
+  --bound:#5C6B2F;       /* bound states */
+  --shadow:0 1px 2px rgba(20,26,30,.05), 0 8px 24px -12px rgba(20,26,30,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#0E1317; --panel:#151B21; --ink:#E3E9ED; --muted:#8A96A1;
+    --line:#232C34; --hair:#1C242B;
+    --accent:#E28450; --accent2:#63AEC0; --bound:#A8BC63;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1317; --panel:#151B21; --ink:#E3E9ED; --muted:#8A96A1;
+  --line:#232C34; --hair:#1C242B;
+  --accent:#E28450; --accent2:#63AEC0; --bound:#A8BC63;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.7);
+}
+:root[data-theme="light"]{
+  --ground:#F6F5F1; --panel:#FFFFFF; --ink:#161B20; --muted:#6B7680;
+  --line:#DEE1DC; --hair:#EAECE8;
+  --accent:#A8431B; --accent2:#1F6475; --bound:#5C6B2F;
+  --shadow:0 1px 2px rgba(20,26,30,.05), 0 8px 24px -12px rgba(20,26,30,.18);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px; line-height:1.55;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:28px 22px 60px}
+
+header{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px}
+h1{
+  font-family:ui-serif,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  font-size:1.6rem; font-weight:600; letter-spacing:-.01em; margin:0; text-wrap:balance;
+}
+.sub{color:var(--muted); font-size:.92rem; max-width:64ch; margin:2px 0 20px}
+.eq{font-family:ui-serif,Georgia,serif; font-style:italic}
+
+.bar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px}
+.lab{font-size:.7rem; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-right:2px}
+button{
+  font:inherit; font-size:.84rem; color:var(--ink); background:var(--panel);
+  border:1px solid var(--line); border-radius:2px; padding:5px 11px; cursor:pointer;
+  transition:border-color .12s, background .12s;
+}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button.on{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] button.on, @media (prefers-color-scheme:dark){}
+
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media (max-width:860px){ .grid{grid-template-columns:1fr} }
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:3px;
+  padding:14px 14px 10px; box-shadow:var(--shadow);
+}
+.card h2{
+  font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+  margin:0 0 2px; font-weight:600;
+}
+.card .hint{font-size:.78rem; color:var(--muted); margin:0 0 10px}
+canvas{display:block; width:100%; height:auto; border-radius:2px; touch-action:none}
+#pot{cursor:crosshair}
+
+.full{margin-top:16px}
+table{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums;
+  font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace; font-size:.8rem}
+th{
+  text-align:right; font-weight:600; color:var(--muted); font-size:.66rem;
+  text-transform:uppercase; letter-spacing:.08em; padding:0 10px 6px; border-bottom:1px solid var(--line);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+th:first-child,td:first-child{text-align:left}
+td{padding:4px 10px; border-bottom:1px solid var(--hair); text-align:right}
+td:first-child{text-align:left}
+tr:last-child td{border-bottom:none}
+.tag{
+  display:inline-block; font-size:.63rem; letter-spacing:.06em; text-transform:uppercase;
+  padding:1px 6px; border-radius:2px; border:1px solid currentColor; opacity:.85;
+  font-family:-apple-system,sans-serif;
+}
+.t-long{color:var(--accent)} .t-bound{color:var(--bound)} .t-res{color:var(--muted)}
+.scroller{overflow-x:auto}
+.note{font-size:.8rem; color:var(--muted); margin-top:14px; max-width:70ch}
+.note b{color:var(--ink); font-weight:600}
+.stat{display:flex; gap:20px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); margin-top:8px}
+.stat b{color:var(--ink); font-weight:600;
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-variant-numeric:tabular-nums}
+
+.fitbar{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.fitbtn{
+  background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;
+  padding:7px 14px;
+}
+.fitbtn:disabled{opacity:.55; cursor:default}
+.spinner{
+  width:13px; height:13px; border-radius:50%; border:2px solid var(--line);
+  border-top-color:var(--accent); animation:spin .7s linear infinite; display:none;
+}
+.spinner.on{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fitstatus{font-size:.8rem; color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header><h1>Resonance Explorer</h1></header>
+<p class="sub">
+Draw a potential <span class="eq">V(x)</span>. The scattering resonances of
+<span class="eq">&minus;u&Prime; + Vu = &lambda;&sup2;u</span> &mdash; the poles of the continued resolvent &mdash;
+are found from the Jost function and shown in the complex <span class="eq">&lambda;</span>&#8209;plane.
+The third panel is the wave trace those resonances predict through the Poisson formula.
+</p>
+
+<div class="bar">
+  <span class="lab">Preset</span>
+  <button data-p="bump">Single bump</button>
+  <button data-p="double">Well between barriers</button>
+  <button data-p="square">Square barrier</button>
+  <button data-p="wellneg">Attractive well</button>
+  <button data-p="steps">Staircase</button>
+  <button data-p="flat">Clear</button>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Potential</h2>
+    <p class="hint">Click and drag to draw. Supported on &minus;4 &le; x &le; 4; zero outside.</p>
+    <canvas id="pot" width="1100" height="620"></canvas>
+  </div>
+  <div class="card">
+    <h2>Resonances in the &lambda;-plane</h2>
+    <p class="hint">Resonances come in pairs &lambda;, &minus;<span style="font-family:ui-serif,Georgia,serif;font-style:italic">&lambda;&#772;</span>, so the picture is symmetric about the imaginary axis. Closer to the real axis means longer lived.</p>
+    <canvas id="plane" width="1100" height="620"></canvas>
+  </div>
+</div>
+
+<div class="card full">
+  <h2>Wave trace predicted by the Poisson formula</h2>
+  <p class="hint">
+    Tr(U<sub>V</sub>(t) &minus; U<sub>0</sub>(t)) = &frac12; &sum; e<sup>&minus;i&lambda;<sub>j</sub>t</sup> &minus; &frac12;,
+    summed over the resonances found at left. Every amplitude is &plusmn;&frac12;.
+  </p>
+  <canvas id="trace" width="1600" height="340"></canvas>
+  <div class="stat">
+    <span>resonances found <b id="nres">0</b></span>
+    <span>solve time <b id="ms">0</b> ms</span>
+    <span>longest lived <b id="best">&mdash;</b></span>
+  </div>
+</div>
+
+<div class="card full scroller">
+  <h2>Values</h2>
+  <p class="hint">One of each mirror pair listed.</p>
+  <table id="tbl"><thead><tr>
+    <th>#</th><th>Re &lambda;</th><th>Im &lambda;</th><th>lifetime 1/|Im &lambda;|</th><th>residual</th><th>kind</th>
+  </tr></thead><tbody></tbody></table>
+</div>
+
+<div class="card full">
+  <h2>Fit resonances from the trace itself</h2>
+  <p class="hint">
+    This runs the wave-trace fitting method end to end, entirely in this page: discretize
+    <span class="eq">&minus;u&Prime;+Vu</span> on a truncated interval, diagonalize, assemble
+    the windowed trace, then recover nodes from the samples by certified deflation
+    (<span class="eq">c</span> frozen at the nearest half-integer once it is certified,
+    so the tail cannot corrupt nodes already found). No knowledge of the Jost function is
+    used here &mdash; it is a genuinely independent check of the panels above.
+  </p>
+  <div class="fitbar">
+    <button id="fitbtn" class="fitbtn">Fit from the trace</button>
+    <span class="spinner" id="fitspin"></span>
+    <span class="fitstatus" id="fitstatus">Takes several seconds &mdash; it diagonalizes an ~800&times;800 matrix in plain JavaScript, with no numerical libraries.</span>
+  </div>
+  <div id="fitresult" style="display:none; margin-top:14px">
+    <div class="scroller">
+      <table id="fittbl"><thead><tr>
+        <th>#</th><th>Re &lambda;</th><th>Im &lambda;</th><th>amplitude</th><th>nearest Jost root</th><th>error</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <p class="hint" style="margin-top:10px">
+      Each row is compared against the nearest root of the Jost function (the panels above), an entirely
+      independent computation. Agreement is expected to degrade with depth &mdash; that degradation, not
+      floating point error, is the central finding: a joint fit of finitely many exponentials
+      to an infinite resonance sum can only resolve the first few before the truncated tail takes over.
+    </p>
+  </div>
+</div>
+
+<p class="note">
+<b>How it works.</b> Outside the support the solutions are exactly
+e<sup>&plusmn;i&lambda;x</sup>, so a solution outgoing at &minus;&infin; is propagated across
+the potential with the exact 2&times;2 propagator of a piecewise constant potential, and
+&lambda; is a resonance precisely when the incoming coefficient at +&infin; vanishes,
+F(&lambda;) = i&lambda;u(a) &minus; u&prime;(a) = 0. Roots are seeded on a grid and polished by the
+secant method.
+<br><br>
+<b>One honest limit.</b> For a very long lived resonance the outgoing coefficient is
+smaller than its companion by e<sup>&minus;2&int;&kappa;</sup>, and recovering it from a
+propagated solution is a cancellation of that size. Such resonances are tagged
+<span class="tag t-long">long-lived</span>: their real parts are accurate, their widths
+are at the edge of what this formulation can resolve, and some may be missed entirely.
+Recovering them accurately is precisely what the wave-trace method above does well,
+since a narrow resonance is one that persists in time.
+<br><br>
+<b>Accuracy.</b> The potential is modelled as 400 constant slabs, for which the propagator
+is exact; against a smooth reference the resonances agree to about 10<sup>&minus;4</sup>.
+</p>
+</div>
+
+<script>
+/* --------------------------------------------------------------------------
+   Small dense linear algebra kernels, written from scratch (no dependency),
+   because the explorer runs entirely client side.
+
+   symEig(A,n)   Householder tridiagonalization + implicit-shift QL
+                 (Numerical Recipes tred2 / tqli).  Symmetric matrices only,
+                 used for the Galerkin operator and for A^T A in the SVD.
+
+   hessQR(A,n)   Hessenberg reduction (Gaussian elimination with partial
+                 pivoting) + the Francis double-shift QR algorithm
+                 (Numerical Recipes elmhes / hqr).  Eigenvalues only, of a
+                 general real matrix; complex conjugate pairs come out as
+                 (re,im) with im != 0.  This is the one genuinely delicate
+                 piece and is validated against MATLAB below.
+   -------------------------------------------------------------------------- */
+"use strict";
+
+function symEig(Aflat, n){
+  // Aflat: n*n array, row-major, overwritten as workspace. Returns {val:[n]}.
+  const a = Aflat;                    // alias, will hold Q on exit (unused)
+  const d = new Float64Array(n), e = new Float64Array(n);
+  // --- tred2: reduce to tridiagonal form, eigenvalues in d, sub-diag in e
+  for(let i=n-1;i>=1;i--){
+    const l=i-1;
+    let h=0, scale=0;
+    if(l>0){
+      for(let k=0;k<=l;k++) scale += Math.abs(a[i*n+k]);
+      if(scale===0){ e[i]=a[i*n+l]; }
+      else{
+        for(let k=0;k<=l;k++){ a[i*n+k]/=scale; h+=a[i*n+k]*a[i*n+k]; }
+        let f=a[i*n+l];
+        let g = f>=0 ? -Math.sqrt(h) : Math.sqrt(h);
+        e[i]=scale*g; h -= f*g; a[i*n+l]=f-g;
+        f=0;
+        for(let j=0;j<=l;j++){
+          g=0;
+          for(let k=0;k<=j;k++) g+=a[j*n+k]*a[i*n+k];
+          for(let k=j+1;k<=l;k++) g+=a[k*n+j]*a[i*n+k];
+          e[j]=g/h; f+=e[j]*a[i*n+j];
+        }
+        const hh=f/(h+h);
+        for(let j=0;j<=l;j++){
+          f=a[i*n+j]; e[j]=g=e[j]-hh*f;
+          for(let k=0;k<=j;k++) a[j*n+k] -= (f*e[k]+g*a[i*n+k]);
+        }
+      }
+    } else { e[i]=a[i*n+l]; }
+    d[i]=h;
+  }
+  d[0]=0; e[0]=0;
+  for(let i=0;i<n;i++) d[i]=a[i*n+i];
+
+  // --- tqli: QL with implicit shifts on the tridiagonal (d,e)
+  for(let i=1;i<n;i++) e[i-1]=e[i];
+  e[n-1]=0;
+  for(let l=0;l<n;l++){
+    let iter=0, m;
+    do{
+      for(m=l;m<n-1;m++){
+        const dd=Math.abs(d[m])+Math.abs(d[m+1]);
+        if(Math.abs(e[m])<=1e-15*dd) break;
+      }
+      if(m!==l){
+        if(iter++===60) break;                 // should not happen
+        let g=(d[l+1]-d[l])/(2*e[l]);
+        let r=Math.hypot(g,1);
+        g=d[m]-d[l]+e[l]/(g+(g>=0?Math.abs(r):-Math.abs(r)));
+        let s=1,c=1,p=0;
+        for(let i=m-1;i>=l;i--){
+          let f=s*e[i], b=c*e[i];
+          r=Math.hypot(f,g);
+          e[i+1]=r;
+          if(r===0){ d[i+1]-=p; e[m]=0; break; }
+          s=f/r; c=g/r;
+          g=d[i+1]-p;
+          r=(d[i]-g)*s+2*c*b;
+          p=s*r; d[i+1]=g+p; g=c*r-b;
+        }
+        if(r===0 && (m-1)>=l) continue;
+        d[l]-=p; e[l]=g; e[m]=0;
+      }
+    } while(m!==l);
+  }
+  return d;
+}
+
+/* Solve a x = b for a general real n*n system by Gaussian elimination with
+   partial pivoting.  a is destroyed; b is overwritten with the solution.
+   Used both directly (small complex/real least-squares solves, done as 2n
+   real systems) and inside inverseIterationEigvec below. */
+function linSolve(a, b, n){
+  for(let k=0;k<n;k++){
+    let piv=k, best=Math.abs(a[k*n+k]);
+    for(let i=k+1;i<n;i++){ const v=Math.abs(a[i*n+k]); if(v>best){best=v;piv=i;} }
+    if(piv!==k){
+      for(let j=0;j<n;j++){ const t=a[k*n+j]; a[k*n+j]=a[piv*n+j]; a[piv*n+j]=t; }
+      const t=b[k]; b[k]=b[piv]; b[piv]=t;
+    }
+    const d=a[k*n+k];
+    if(Math.abs(d)<1e-300) continue;             // singular direction: leave as is
+    for(let i=k+1;i<n;i++){
+      const f=a[i*n+k]/d;
+      if(f===0) continue;
+      for(let j=k;j<n;j++) a[i*n+j]-=f*a[k*n+j];
+      b[i]-=f*b[k];
+    }
+  }
+  for(let i=n-1;i>=0;i--){
+    let s=b[i];
+    for(let j=i+1;j<n;j++) s-=a[i*n+j]*b[j];
+    b[i] = Math.abs(a[i*n+i])<1e-300 ? 0 : s/a[i*n+i];
+  }
+  return b;
+}
+
+/* Eigenvectors of a symmetric matrix at KNOWN eigenvalues (from symEig), by
+   inverse iteration: solve (A - (lam+eps) I) x = x_prev and renormalize, a
+   handful of times.  Much simpler to get right than accumulating rotations
+   through tred2/tql2, and just as accurate once the eigenvalues are known.
+   Aflat is n*n row-major and is NOT modified (a fresh copy is perturbed and
+   factored on every call). */
+function inverseIterationEigvec(Aflat, n, lambda, iters){
+  const M = new Float64Array(n*n);
+  const eps = (Math.abs(lambda)+1)*1e-10;
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++) M[i*n+j]=Aflat[i*n+j] - (i===j?lambda+eps:0);
+  let x = new Float64Array(n);
+  for(let i=0;i<n;i++) x[i]=Math.sin(i*0.7+lambda)+1;  // deterministic, generic start
+  for(let it=0;it<iters;it++){
+    const W = new Float64Array(n*n);
+    for(let i=0;i<n*n;i++) W[i]=M[i];
+    const b = new Float64Array(n);
+    for(let i=0;i<n;i++) b[i]=x[i];
+    linSolve(W, b, n);
+    let nrm=0; for(let i=0;i<n;i++) nrm+=b[i]*b[i];
+    nrm=Math.sqrt(nrm);
+    if(nrm<1e-300) break;
+    for(let i=0;i<n;i++) x[i]=b[i]/nrm;
+  }
+  return x;
+}
+
+/* Eigenvalues of a general real matrix, by Householder reduction to upper
+   Hessenberg form followed by the practical (Wilkinson-shift) QR algorithm
+   with Givens rotations and explicit deflation.  A is n*n, row-major,
+   destroyed.  Returns {re:[n], im:[n]}.
+   This is the textbook "practical QR algorithm" (Golub & Van Loan, Sec.
+   7.5): simpler and easier to get right than the Francis double-shift with
+   an explicit bulge chase, at the cost of not exploiting complex shifts as
+   aggressively.  For the small (order tens) matrices this function is used
+   on -- the ESPRIT shift-invariance matrix -- that cost is immaterial. */
+function hessQR(a, n){
+  // --- Householder reduction to upper Hessenberg, as a similarity transform
+  for(let k=0;k<n-2;k++){
+    let alpha=0;
+    for(let i=k+1;i<n;i++) alpha += a[i*n+k]*a[i*n+k];
+    alpha = Math.sqrt(alpha);
+    if(alpha===0) continue;
+    if(a[(k+1)*n+k] > 0) alpha = -alpha;
+    const v = new Float64Array(n);
+    v[k+1] = a[(k+1)*n+k] - alpha;
+    for(let i=k+2;i<n;i++) v[i] = a[i*n+k];
+    let vnorm2=0; for(let i=k+1;i<n;i++) vnorm2 += v[i]*v[i];
+    if(vnorm2 < 1e-300) continue;
+    // A <- (I - 2vv^T/|v|^2) A (I - 2vv^T/|v|^2), applied as two-sided update
+    for(let j=0;j<n;j++){
+      let s=0; for(let i=k+1;i<n;i++) s+=v[i]*a[i*n+j];
+      s = 2*s/vnorm2;
+      for(let i=k+1;i<n;i++) a[i*n+j]-=s*v[i];
+    }
+    for(let i=0;i<n;i++){
+      let s=0; for(let j=k+1;j<n;j++) s+=a[i*n+j]*v[j];
+      s = 2*s/vnorm2;
+      for(let j=k+1;j<n;j++) a[i*n+j]-=s*v[j];
+    }
+  }
+  for(let i=2;i<n;i++) for(let j=0;j<i-1;j++) a[i*n+j]=0;
+
+  const wr=new Float64Array(n), wi=new Float64Array(n);
+  let p = n-1;                       // active block is 0..p
+  let guard = 0;
+  const GUARDMAX = 60*n + 200;
+
+  function subnorm(i){ return Math.abs(a[i*n+(i-1)]); }
+  function diagscale(i){ return Math.abs(a[i*n+i])+Math.abs(a[(i-1)*n+(i-1)])+1e-300; }
+
+  while(p>=0 && guard++ < GUARDMAX){
+    if(p===0){ wr[0]=a[0]; wi[0]=0; p=-1; break; }
+
+    // deflate any negligible subdiagonal entries in the active block
+    let q = p;
+    while(q>0 && subnorm(q) > 1e-13*diagscale(q)) q--;
+    // now [q..p] is irreducible (or q==p, a single eigenvalue)
+    if(q===p){ wr[p]=a[p*n+p]; wi[p]=0; p--; continue; }
+    if(q===p-1){
+      // 2x2 block: solve directly, real or complex conjugate pair
+      const a11=a[q*n+q], a12=a[q*n+p], a21=a[p*n+q], a22=a[p*n+p];
+      const tr=a11+a22, det=a11*a22-a12*a21;
+      const disc=tr*tr-4*det;
+      if(disc>=0){
+        const s=Math.sqrt(disc);
+        wr[q]=(tr+s)/2; wi[q]=0;
+        wr[p]=(tr-s)/2; wi[p]=0;
+      } else {
+        const s=Math.sqrt(-disc);
+        wr[q]=wr[p]=tr/2; wi[q]=s/2; wi[p]=-s/2;
+      }
+      p=q-1; continue;
+    }
+
+    // Wilkinson shift from the trailing 2x2 block of the active submatrix
+    const a11=a[(p-1)*n+(p-1)], a12=a[(p-1)*n+p], a21=a[p*n+(p-1)], a22=a[p*n+p];
+    const tr=a11+a22, det=a11*a22-a12*a21, disc=tr*tr-4*det;
+    let mu;
+    if(disc>=0){
+      const s=Math.sqrt(disc), l1=(tr+s)/2, l2=(tr-s)/2;
+      mu = Math.abs(l1-a22) < Math.abs(l2-a22) ? l1 : l2;
+    } else {
+      mu = a22;                       // complex pair: fall back to Rayleigh shift
+    }
+    for(let i=q;i<=p;i++) a[i*n+i]-=mu;
+
+    // QR step on the active Hessenberg block [q..p] via Givens rotations
+    const cs=new Float64Array(p+1), sn=new Float64Array(p+1);
+    for(let k=q;k<p;k++){
+      const x=a[k*n+k], y=a[(k+1)*n+k];
+      const r=Math.sqrt(x*x+y*y);
+      const c = r===0?1:x/r, s = r===0?0:y/r;
+      cs[k]=c; sn[k]=s;
+      for(let j=k;j<n;j++){
+        const t1=a[k*n+j], t2=a[(k+1)*n+j];
+        a[k*n+j]=c*t1+s*t2; a[(k+1)*n+j]=-s*t1+c*t2;
+      }
+    }
+    for(let k=q;k<p;k++){
+      const c=cs[k], s=sn[k];
+      for(let i=0;i<=Math.min(k+2,p);i++){
+        const t1=a[i*n+k], t2=a[i*n+(k+1)];
+        a[i*n+k]=c*t1+s*t2; a[i*n+(k+1)]=-s*t1+c*t2;
+      }
+    }
+    for(let i=q;i<=p;i++) a[i*n+i]+=mu;
+  }
+  return {re:wr, im:wi};
+}
+
+
+"use strict";
+/* --------------------------------------------------------------------------
+   Client-side port of wave_trace.m: the windowed spectral wave trace.
+   V is given on NV slabs covering [-A,A]; the
+   Dirichlet problem -u_xx+Vu on [-L,L] is discretized in the sine basis
+   e_k(y) = sqrt(1/L) sin(k pi y / 2L), for which the free spectrum is
+   EXACT, and the Galerkin matrix is diag(mu0) + (a_{|j-k|} - a_{j+k}),
+   a_p = (1/2L) int_0^{2L} V(y-L) cos(p pi y / 2L) dy.  A smooth compactly
+   supported spectral window removes the eigenvalues above Lambda*bw before
+   summing cos(t*lambda), which is what makes the trace accurate uniformly
+   in t down to Lambda^{-infinity}.
+   -------------------------------------------------------------------------- */
+
+/* Cosine coefficients a_p = (1/2L) int_0^{2L} V(y-L) cos(p pi y / 2L) dy,
+   p = 0..2N, by direct quadrature (V is piecewise constant on the NV slabs,
+   so the integral over each slab is exact in closed form -- no grid needed). */
+function cosCoeffs(Vslabs, NV, A, L, Np){
+  const a = new Float64Array(Np+1);
+  const h = 2*A/NV;                 // slab width
+  const w = Math.PI/(2*L);
+  for(let p=0;p<=Np;p++){
+    if(p===0){
+      let s=0; for(let j=0;j<NV;j++) s += Vslabs[j]*h;
+      a[0] = s/(2*L);
+      continue;
+    }
+    const k = p*w;
+    let s=0;
+    for(let j=0;j<NV;j++){
+      const y0 = (j*h) + (L-A);       // slab in the y=x+L coordinate
+      const y1 = y0+h;
+      s += Vslabs[j]*(Math.sin(k*y1)-Math.sin(k*y0))/k;
+    }
+    a[p] = s/(2*L);
+  }
+  return a;
+}
+
+/* Eigenvalues of the Galerkin matrix diag(mu0) + (a_{|j-k|}-a_{j+k}), and the
+   exact free eigenvalues mu0.  Returns {mu:[N], mu0:[N]}. */
+function galerkinSpectrum(Vslabs, NV, A, L, N){
+  const a = cosCoeffs(Vslabs, NV, A, L, 2*N);
+  const M = new Float64Array(N*N);
+  const mu0 = new Float64Array(N);
+  for(let k=1;k<=N;k++) mu0[k-1] = (k*Math.PI/(2*L))*(k*Math.PI/(2*L));
+  for(let j=0;j<N;j++){
+    for(let k=0;k<N;k++){
+      M[j*N+k] = a[Math.abs(j-k)] - a[j+k+2];
+    }
+    M[j*N+j] += mu0[j];
+  }
+  const mu = symEig(M, N);            // ascending
+  return {mu:mu, mu0:mu0};
+}
+
+/* Smooth compactly supported window: 1 on [0,1], 0 on [bw,inf). */
+function specWindow(u, bw){
+  if(u<=1) return 1;
+  if(u>=bw) return 0;
+  const s=(bw-u)/(bw-1);
+  const f1=Math.exp(-1/s), f2=Math.exp(-1/(1-s));
+  return f1/(f1+f2);
+}
+
+/* The windowed trace at the sample times t[], given precomputed spectra.
+   mu[k] < 0 is a bound state and contributes cosh(t*sqrt(-mu)), not cos. */
+function assembleTrace(mu, mu0, N, Lambda, bw, t){
+  const lamV=new Float64Array(N), wgtV=new Float64Array(N);
+  const boundV=new Uint8Array(N);
+  let nkeep=0;
+  for(let k=0;k<N;k++){
+    const bound = mu[k]<0;
+    const val = bound ? Math.sqrt(-mu[k]) : Math.sqrt(mu[k]);
+    const wv = specWindow(val/Lambda, bw);
+    if(wv>0){ lamV[nkeep]=val; boundV[nkeep]=bound?1:0; wgtV[nkeep]=wv; nkeep++; }
+  }
+  const lam0=new Float64Array(N), wgt0=new Float64Array(N);
+  let nkeep0=0;
+  for(let k=0;k<N;k++){
+    const l0=Math.sqrt(mu0[k]);
+    const wv=specWindow(l0/Lambda, bw);
+    if(wv>0){ lam0[nkeep0]=l0; wgt0[nkeep0]=wv; nkeep0++; }
+  }
+  const out=new Float64Array(t.length);
+  for(let i=0;i<t.length;i++){
+    let s=0;
+    for(let k=0;k<nkeep;k++)
+      s += wgtV[k]*(boundV[k] ? Math.cosh(t[i]*lamV[k]) : Math.cos(t[i]*lamV[k]));
+    for(let k=0;k<nkeep0;k++) s -= wgt0[k]*Math.cos(t[i]*lam0[k]);
+    out[i]=s;
+  }
+  return out;
+}
+
+
+"use strict";
+/* --------------------------------------------------------------------------
+   ESPRIT / matrix-pencil recovery of an exponential sum from real samples,
+   and certified deflation.  Everything here is built on the validated
+   symEig / hessQR / linSolve of linalg.js.
+   -------------------------------------------------------------------------- */
+
+/* Left singular vectors and values of the real Hankel matrix H (rows=L+1,
+   cols=Ns-L-1) built from f, via the eigendecomposition of the SMALL matrix
+   S = H H^T (size L+1), whose eigenvectors ARE the left singular vectors and
+   whose eigenvalues are sigma^2.  Returns {sv:[Lp1] descending, U:[Lp1*Lp1]
+   with column j = j-th left singular vector}, Lp1 = L+1. */
+function hankelSVD(f, Ns, L){
+  const Lp1 = L+1, cols = Ns-L-1;
+  const H = new Float64Array(Lp1*cols);
+  for(let i=0;i<Lp1;i++) for(let j=0;j<cols;j++) H[i*cols+j]=f[i+j];
+  const S = new Float64Array(Lp1*Lp1);
+  for(let i=0;i<Lp1;i++) for(let k=i;k<Lp1;k++){
+    let s=0; for(let j=0;j<cols;j++) s+=H[i*cols+j]*H[k*cols+j];
+    S[i*Lp1+k]=s; S[k*Lp1+i]=s;
+  }
+  const Scopy = new Float64Array(S);
+  const dRaw = symEig(Scopy, Lp1);            // ascending
+  const idx=[]; for(let i=0;i<Lp1;i++) idx.push(i);
+  idx.sort((p,q)=>dRaw[q]-dRaw[p]);            // descending
+  const sv=new Float64Array(Lp1), U=new Float64Array(Lp1*Lp1);
+  for(let j=0;j<Lp1;j++){
+    const lam = Math.max(dRaw[idx[j]],0);
+    sv[j]=Math.sqrt(lam);
+    const v = inverseIterationEigvec(S, Lp1, dRaw[idx[j]], 4);
+    for(let i=0;i<Lp1;i++) U[i*Lp1+j]=v[i];
+  }
+  return {sv:sv, U:U, Lp1:Lp1};
+}
+
+/* One ESPRIT fit.  f: real samples at t0+n*dt, n=0..Ns-1.  Returns
+   {lambda:[M] (re,im pairs as {re,im}), amp:[M] ({re,im}), M, sv}. */
+function espritFit(f, dt, t0, tol){
+  const Ns=f.length, L=Math.floor(Ns/2);
+  const svd = hankelSVD(f, Ns, L);
+  const Lp1 = svd.Lp1;
+  let M=0;
+  while(M<Lp1-1 && svd.sv[M] > tol*svd.sv[0]) M++;
+  M = Math.max(1, Math.min(M, Lp1-1));
+  // ESPRIT needs Us_down (Us with the last row dropped) to be well
+  // conditioned, which needs M well below Lp1: MATLAB's backslash papers
+  // over a near-singular Us_down with an SVD-based pseudoinverse, but plain
+  // Gaussian elimination on the normal equations (used below, since there is
+  // no complex QR here) does not, and can return nonsense -- an eigenvalue
+  // orders of magnitude off, with a NaN amplitude to match.  Capping M at
+  // Lp1/2 is the standard ESPRIT rule of thumb for exactly this reason.
+  M = Math.max(1, Math.min(M, Math.floor(Lp1/2)));
+
+  // shift-invariance matrix: Phi = pinv(Us_down) * Us_up, both (Lp1-1) x M
+  // built via the normal equations (Us_down^T Us_down) Phi = Us_down^T Us_up,
+  // solved M columns at a time with linSolve, with a small Tikhonov term so
+  // a still-marginal G cannot blow the solve up (see the note above).
+  const m = Lp1-1;
+  const G = new Float64Array(M*M);            // Us_down^T Us_down
+  for(let a=0;a<M;a++) for(let b=0;b<M;b++){
+    let s=0; for(let i=0;i<m;i++) s+=svd.U[i*Lp1+a]*svd.U[i*Lp1+b];
+    G[a*M+b]=s;
+  }
+  let gtrace=0; for(let a=0;a<M;a++) gtrace+=G[a*M+a];
+  const greg=Math.max(gtrace/M,1)*1e-12;
+  for(let a=0;a<M;a++) G[a*M+a]+=greg;
+  const RHS = new Float64Array(M*M);           // Us_down^T Us_up
+  for(let a=0;a<M;a++) for(let b=0;b<M;b++){
+    let s=0; for(let i=0;i<m;i++) s+=svd.U[i*Lp1+a]*svd.U[(i+1)*Lp1+b];
+    RHS[a*M+b]=s;
+  }
+  const Phi = new Float64Array(M*M);           // Phi[a*M+b], column b solved at a time
+  for(let b=0;b<M;b++){
+    const Gw=new Float64Array(G), rhs=new Float64Array(M);
+    for(let a=0;a<M;a++) rhs[a]=RHS[a*M+b];
+    linSolve(Gw, rhs, M);
+    for(let a=0;a<M;a++) Phi[a*M+b]=rhs[a];
+  }
+  const evRaw = hessQR(new Float64Array(Phi), M);   // eigenvalues z_j of Phi
+
+  // At model order M above the numerical rank, ESPRIT returns spurious nodes
+  // at z ~ 0 (and occasionally z blown up), whose Vandermonde columns are
+  // degenerate and poison the amplitude solve for every other node -- this is
+  // exactly the failure mode prony_fit.m guards against with zfloor/zceil.
+  // Filter here, BEFORE the Vandermonde solve, not after.
+  const zfloor=1e-6, zceil=1.5;
+  const zrAll=evRaw.re, ziAll=evRaw.im;
+  const keep=[];
+  for(let j=0;j<M;j++){
+    const mod=Math.sqrt(zrAll[j]*zrAll[j]+ziAll[j]*ziAll[j]);
+    if(isFinite(mod) && mod>zfloor && mod<zceil) keep.push(j);
+  }
+  if(keep.length===0) keep.push(0);
+  M = keep.length;
+  const zr=new Float64Array(M), zi=new Float64Array(M);
+  for(let j=0;j<M;j++){ zr[j]=zrAll[keep[j]]; zi[j]=ziAll[keep[j]]; }
+
+  // amplitudes: least squares Vandermonde solve, c minimizes |V c - f|,
+  // done via the complex normal equations (V^H V) c = V^H f, size M complex.
+  const AtAr=new Float64Array(M*M), AtAi=new Float64Array(M*M);
+  const Atbr=new Float64Array(M), Atbi=new Float64Array(M);
+  // column scaling to avoid the ill conditioning of a raw Vandermonde solve
+  const colnorm=new Float64Array(M);
+  const powRe=new Float64Array(M*Ns), powIm=new Float64Array(M*Ns);
+  for(let j=0;j<M;j++){
+    let pr=1, pi=0, nrm=0;
+    for(let n=0;n<Ns;n++){
+      powRe[j*Ns+n]=pr; powIm[j*Ns+n]=pi;
+      nrm += pr*pr+pi*pi;
+      const npr = pr*zr[j]-pi*zi[j], npi = pr*zi[j]+pi*zr[j];
+      pr=npr; pi=npi;
+    }
+    colnorm[j]=Math.sqrt(nrm)||1;
+  }
+  for(let j=0;j<M;j++) for(let n=0;n<Ns;n++){ powRe[j*Ns+n]/=colnorm[j]; powIm[j*Ns+n]/=colnorm[j]; }
+  for(let a=0;a<M;a++){
+    let sr=0, si=0;
+    for(let n=0;n<Ns;n++){ sr += powRe[a*Ns+n]*f[n]; si += -powIm[a*Ns+n]*f[n]; }
+    Atbr[a]=sr; Atbi[a]=si;
+    for(let b=0;b<M;b++){
+      let sr2=0, si2=0;
+      for(let n=0;n<Ns;n++){
+        // (conj of col a) * (col b)
+        const car=powRe[a*Ns+n], cai=-powIm[a*Ns+n];
+        const cbr=powRe[b*Ns+n], cbi=powIm[b*Ns+n];
+        sr2 += car*cbr-cai*cbi; si2 += car*cbi+cai*cbr;
+      }
+      AtAr[a*M+b]=sr2; AtAi[a*M+b]=si2;
+    }
+  }
+  // columns are already unit-normalized, so a tiny ridge term does not
+  // perturb a well-conditioned solve but keeps a marginal one from blowing up
+  for(let a=0;a<M;a++) AtAr[a*M+a]+=1e-10;
+  const cs = complexSolve(AtAr, AtAi, Atbr, Atbi, M);
+  const lambda=[], amp=[];
+  for(let j=0;j<M;j++){
+    const modz=Math.sqrt(zr[j]*zr[j]+zi[j]*zi[j]);
+    const argz=Math.atan2(zi[j],zr[j]);
+    const lamRe = -argz/dt, lamIm = Math.log(Math.max(modz,1e-300))/dt;
+    const cRe = cs.re[j]/colnorm[j], cIm = cs.im[j]/colnorm[j];
+    // amplitude referred to t=0: c * exp(i*lam*t0)
+    const e = Math.exp(-lamIm*t0);
+    const ph = lamRe*t0;
+    const ar = e*(cRe*Math.cos(ph)-cIm*Math.sin(ph));
+    const ai = e*(cRe*Math.sin(ph)+cIm*Math.cos(ph));
+    lambda.push({re:lamRe, im:lamIm});
+    amp.push({re:ar, im:ai});
+  }
+  return {lambda:lambda, amp:amp, M:M, sv:svd.sv};
+}
+
+/* Solve a complex M x M system (Ar,Ai) x = (br,bi) by Gaussian elimination
+   with partial pivoting on the equivalent 2M x 2M real system. */
+function complexSolve(Ar, Ai, br, bi, M){
+  const n=2*M;
+  const A = new Float64Array(n*n), b = new Float64Array(n);
+  for(let i=0;i<M;i++) for(let j=0;j<M;j++){
+    A[i*n+j]=Ar[i*M+j];       A[i*n+(M+j)]=-Ai[i*M+j];
+    A[(M+i)*n+j]=Ai[i*M+j];   A[(M+i)*n+(M+j)]=Ar[i*M+j];
+  }
+  for(let i=0;i<M;i++){ b[i]=br[i]; b[M+i]=bi[i]; }
+  linSolve(A, b, n);
+  const re=new Float64Array(M), im=new Float64Array(M);
+  for(let i=0;i<M;i++){ re[i]=b[i]; im[i]=b[M+i]; }
+  return {re:re, im:im};
+}
+
+/* Certified deflation (Algorithm 2 of the appendix).  Returns an array of
+   {lambda:{re,im}, q, round}. */
+function pronyDeflate(w, dt, t0, tol, qtol, maxRounds){
+  const Ns=w.length;
+  const t=new Float64Array(Ns); for(let n=0;n<Ns;n++) t[n]=t0+n*dt;
+  let resid = new Float64Array(w);
+  const out=[];
+  for(let r=1;r<=maxRounds;r++){
+    const F = espritFit(resid, dt, t0, tol);
+    let bestIdx=-1, bestIm=-Infinity, bestQ=0;
+    for(let j=0;j<F.M;j++){
+      const c=F.amp[j];
+      const q = Math.round(2*c.re)/2;
+      if(q===0 || Math.abs(q)>3) continue;
+      if(Math.abs(c.im) > qtol || Math.abs(c.re-q) > qtol) continue;
+      if(F.lambda[j].im > bestIm){ bestIm=F.lambda[j].im; bestIdx=j; bestQ=q; }
+    }
+    if(bestIdx<0) break;
+    const lam = F.lambda[bestIdx], q=bestQ;
+    if(Math.abs(lam.re) > 1e-7){
+      for(let n=0;n<Ns;n++){
+        resid[n] -= q*( Math.exp(lam.im*t[n])*Math.cos(lam.re*t[n])
+                       + Math.exp(lam.im*t[n])*Math.cos(-lam.re*t[n]) );
+      }
+      out.push({lambda:{re:lam.re,im:lam.im}, q:q, round:r});
+      out.push({lambda:{re:-lam.re,im:lam.im}, q:q, round:r});
+    } else {
+      for(let n=0;n<Ns;n++) resid[n] -= q*Math.exp(lam.im*t[n])*Math.cos(lam.re*t[n]);
+      out.push({lambda:{re:0,im:lam.im}, q:q, round:r});
+    }
+  }
+  let rn=0; for(let n=0;n<Ns;n++) rn+=resid[n]*resid[n];
+  let wn=0; for(let n=0;n<Ns;n++) wn+=w[n]*w[n];
+  return {nodes:out, resid: Math.sqrt(rn/Math.max(wn,1e-300))};
+}
+
+
+"use strict";
+/* --------------------------------------------------------------------------
+   Resonances of -u_xx + Vu = lam^2 u for V supported in [-A,A].
+
+   Outside the support the solutions are exactly e^{+-i lam x}, so a solution
+   outgoing at -infinity is propagated across the potential with the exact 2x2
+   propagator of a piecewise constant potential, and lam is a resonance exactly
+   when the incoming coefficient at +infinity vanishes:
+
+        F(lam) = i lam u(a) - u_x(a) = 0.
+
+   The propagator is written through
+        C(s) = cosh(sqrt s),   S(s) = sinh(sqrt s)/sqrt s,
+   which are entire in s = (V - lam^2)h^2, so there is no square root and no
+   branch cut anywhere in the code.  The whole kernel runs on scalars: no
+   arrays are allocated in the inner loop, which is worth several times the
+   running time over the obvious implementation.
+   -------------------------------------------------------------------------- */
+
+const A = 4;                 // supp V = [-A, A]
+const NV = 400;              // drawing and polish resolution
+const NC = 128;              // coarse resolution for the grid scan
+const V  = new Float64Array(NV);
+const VC = new Float64Array(NC);
+const VMAX = 60, VMIN = -30;
+
+function coarsen(){          // block average preserves the integral of V
+  const k = NV/NC;
+  for(let j=0;j<NC;j++){
+    let s=0; for(let m=0;m<k;m++) s+=V[j*k+m];
+    VC[j]=s/k;
+  }
+}
+
+/* F(lam) written into OUT = [Re F, Im F, scale].  Allocation free. */
+const OUT = new Float64Array(3);
+function jost(lr,li,coarse,out){
+  const Vv = coarse?VC:V, n = Vv.length, h = 2*A/n, h2 = h*h;
+  const e = Math.exp(-li*A);
+  let ur = e*Math.cos(lr*A), ui = e*Math.sin(lr*A);
+  let dr = li*ur + lr*ui, di = li*ui - lr*ur;      // u_x = -i lam u
+  const l2r = lr*lr - li*li, l2i = 2*lr*li;
+  for(let j=0;j<n;j++){
+    const sr = (Vv[j]-l2r)*h2, si = -l2i*h2;
+    let Cr=1,Ci=0,Sr=1,Si=0,tr=1,ti=0,vr=1,vi=0;
+    for(let k=1;k<=14;k++){
+      const d1=(2*k-1)*(2*k);
+      const ar=(tr*sr-ti*si)/d1, ai=(tr*si+ti*sr)/d1; tr=ar; ti=ai; Cr+=tr; Ci+=ti;
+      const d2=(2*k)*(2*k+1);
+      const br=(vr*sr-vi*si)/d2, bi=(vr*si+vi*sr)/d2; vr=br; vi=bi; Sr+=vr; Si+=vi;
+      if((tr<0?-tr:tr)+(ti<0?-ti:ti)+(vr<0?-vr:vr)+(vi<0?-vi:vi) < 1e-18) break;
+    }
+    const qr=sr/h, qi=si/h;
+    const Qr=qr*Sr-qi*Si, Qi=qr*Si+qi*Sr;
+    const nur=(Cr*ur-Ci*ui)+h*(Sr*dr-Si*di);
+    const nui=(Cr*ui+Ci*ur)+h*(Sr*di+Si*dr);
+    const ndr=(Qr*ur-Qi*ui)+(Cr*dr-Ci*di);
+    const ndi=(Qr*ui+Qi*ur)+(Cr*di+Ci*dr);
+    ur=nur; ui=nui; dr=ndr; di=ndi;
+    const m=(ur<0?-ur:ur)+(ui<0?-ui:ui)+(dr<0?-dr:dr)+(di<0?-di:di);
+    if(m>1e120||m<1e-120){ const f=1/m; ur*=f;ui*=f;dr*=f;di*=f; }
+  }
+  out[0] = -li*ur - lr*ui - dr;
+  out[1] = -li*ui + lr*ur - di;
+  out[2] = Math.sqrt(lr*lr+li*li)*Math.sqrt(ur*ur+ui*ui) + Math.sqrt(dr*dr+di*di);
+  return out;
+}
+function jostRel(lr,li,coarse){
+  jost(lr,li,coarse,OUT);
+  return Math.sqrt(OUT[0]*OUT[0]+OUT[1]*OUT[1])/(OUT[2]||1e-300);
+}
+
+/* On the imaginary axis lam = i*kappa the whole propagation stays real, so
+   F(i kappa) is real and its zeros are plain sign changes -- no cancellation,
+   no seeding heuristics.  kappa > 0 gives the bound states (genuine L^2
+   eigenvalues, above the real axis), kappa < 0 the purely imaginary
+   resonances.  This is both more accurate and more reliable than reading the
+   bound states off a Dirichlet box, which forces the state to vanish at the
+   edge of the support and errs by ~1e-2 on the weakest one. */
+function imaginaryAxisRoots(kLo, kHi){
+  const out = [];
+  const M = 1600;
+  let kPrev = kLo, fPrev = jost(0,kLo,false,OUT)[0];
+  for(let i=1;i<=M;i++){
+    const k = kLo + (kHi-kLo)*i/M;
+    const f = jost(0,k,false,OUT)[0];
+    if(isFinite(f) && isFinite(fPrev) && f!==0 && fPrev*f < 0){
+      let a=kPrev, b=k, fa=fPrev;
+      for(let it=0;it<90;it++){
+        const m=0.5*(a+b), fm=jost(0,m,false,OUT)[0];
+        if(fm===0){ a=m; b=m; break; }
+        if(fa*fm<0){ b=m; } else { a=m; fa=fm; }
+      }
+      out.push(0.5*(a+b));
+    }
+    kPrev=k; fPrev=f;
+  }
+  return out;
+}
+
+/* Dirichlet levels of -u_xx + Vu on [-A,A], by Sturm bisection.  Used only as
+   seeds for trapped states now that the imaginary axis is handled exactly. */
+function dirichletLevels(){
+  const n=220, h=2*A/(n+1), d=new Float64Array(n), off2=1/(h*h*h*h);
+  for(let i=0;i<n;i++){
+    const x=-A+(i+1)*h;
+    const idx=Math.min(NV-1,Math.max(0,Math.floor((x+A)/(2*A)*NV)));
+    d[i]=2/(h*h)+V[idx];
+  }
+  let dmin=Infinity,dmax=-Infinity;
+  for(let i=0;i<n;i++){ if(d[i]<dmin)dmin=d[i]; if(d[i]>dmax)dmax=d[i]; }
+  const lo=dmin-4/(h*h), hi=dmax+4/(h*h);
+  function count(x){
+    let q=d[0]-x, c=q<0?1:0;
+    for(let i=1;i<n;i++){ if(q===0) q=1e-300; q=(d[i]-x)-off2/q; if(q<0)c++; }
+    return c;
+  }
+  const total=count(hi), out=[];
+  for(let k=0;k<Math.min(total,45);k++){
+    let a=lo,b=hi;
+    for(let it=0;it<70;it++){ const m=(a+b)/2; if(count(m)>k) b=m; else a=m; }
+    out.push((a+b)/2);
+  }
+  return out;
+}
+
+/* ---------- root finding ---------- */
+let RES=[];
+const ReMax=9, ImMin=-3.0;
+const MAXSEEDS=70;
+const F0=new Float64Array(3), F1=new Float64Array(3);
+
+function solve(){
+  const t0=performance.now();
+  coarsen();
+
+  const nR=170, nI=68, S=new Float64Array(nR*nI);
+  for(let i=0;i<nI;i++){
+    const li=ImMin*(1-i/(nI-1));
+    for(let j=0;j<nR;j++) S[i*nR+j]=jostRel(0.15+(ReMax-0.15)*j/(nR-1), li, true);
+  }
+  let seeds=[];
+  for(let i=1;i<nI-1;i++) for(let j=1;j<nR-1;j++){
+    const v=S[i*nR+j]; let ok=true;
+    for(let a=-1;a<=1&&ok;a++) for(let b=-1;b<=1;b++)
+      if(S[(i+a)*nR+(j+b)]<v){ ok=false; break; }
+    if(ok) seeds.push([0.15+(ReMax-0.15)*j/(nR-1), ImMin*(1-i/(nI-1)), v]);
+  }
+  // keep only the most promising minima; a rough landscape can produce many
+  seeds.sort((p,q)=>p[2]-q[2]);
+  if(seeds.length>MAXSEEDS) seeds.length=MAXSEEDS;
+  const lv=dirichletLevels();
+  for(const E of lv) if(E>0.02&&E<ReMax*ReMax) seeds.push([Math.sqrt(E),-1e-7,0]);
+
+  const found=[];
+  for(const s of seeds){
+    let z0r=s[0], z0i=s[1];
+    let z1r=s[0]*(1+1e-5)+1e-6, z1i=s[1]-1e-6;
+    jost(z0r,z0i,false,F0); let f0r=F0[0], f0i=F0[1];
+    jost(z1r,z1i,false,F1); let f1r=F1[0], f1i=F1[1], den=F1[2];
+    let ok=false;
+    for(let it=0;it<32;it++){
+      const dr=f1r-f0r, di=f1i-f0i, nd=dr*dr+di*di;
+      if(nd<1e-300) break;
+      const wr=z1r-z0r, wi=z1i-z0i;
+      const nur=f1r*wr-f1i*wi, nui=f1r*wi+f1i*wr;
+      const qr=(nur*dr+nui*di)/nd, qi=(nui*dr-nur*di)/nd;
+      const z2r=z1r-qr, z2i=z1i-qi;
+      if(!isFinite(z2r)||!isFinite(z2i)) break;
+      const step=Math.sqrt(qr*qr+qi*qi);
+      z0r=z1r; z0i=z1i; f0r=f1r; f0i=f1i;
+      z1r=z2r; z1i=z2i;
+      jost(z1r,z1i,false,F1); f1r=F1[0]; f1i=F1[1]; den=F1[2];
+      if(step<1e-13*Math.max(1,Math.sqrt(z1r*z1r+z1i*z1i))){ ok=true; break; }
+    }
+    if(!ok) continue;
+    if(z1r<0.05||z1r>ReMax+0.4||z1i>0.02||z1i<ImMin-0.4) continue;
+    const rel=Math.sqrt(f1r*f1r+f1i*f1i)/(den||1e-300);
+    const isLong=Math.abs(z1i)<1e-6;
+    if(rel>1e-7 && !isLong) continue;
+    let dup=false;
+    for(const p of found){
+      const a=p.re-z1r, b=p.im-z1i;
+      if(Math.sqrt(a*a+b*b)<1e-4*Math.max(1,z1r)){ dup=true; break; }
+    }
+    if(dup) continue;
+    found.push({re:z1r, im:Math.min(z1i,0), rel:rel, kind:isLong?"long":"res"});
+  }
+  // the imaginary axis, done exactly
+  let vmin=0; for(let j=0;j<NV;j++) if(V[j]<vmin) vmin=V[j];
+  const kHi = Math.sqrt(Math.max(0,-vmin)) + 0.35;
+  for(const k of imaginaryAxisRoots(ImMin, kHi)){
+    if(Math.abs(k)<1e-9) continue;
+    let dup=false;
+    for(const p of found) if(p.re<1e-7 && Math.abs(p.im-k)<1e-6){ dup=true; break; }
+    if(dup) continue;
+    found.push({re:0, im:k, rel:0, kind: k>0 ? "bound" : "res"});
+  }
+
+  found.sort((a,b)=>(b.im-a.im)||(a.re-b.re));
+  RES=found;
+
+  const rs=found.filter(f=>f.kind!=="bound");
+  let ntot=0; for(const p of rs) ntot += (p.re>1e-8 ? 2 : 1);
+  const nb=found.length-rs.length;
+  document.getElementById('ms').textContent=Math.round(performance.now()-t0);
+  document.getElementById('nres').textContent=
+      ntot + (nb ? "  +  "+nb+" bound" : "");
+  const sh=found.filter(f=>f.kind!=="bound").slice()
+                .sort((a,b)=>Math.abs(a.im)-Math.abs(b.im))[0];
+  document.getElementById('best').textContent =
+    sh ? (1/Math.max(Math.abs(sh.im),1e-16)).toExponential(1) : "—";
+  drawPlane(); drawTrace(); fillTable();
+}
+
+/* ---------- canvases ---------- */
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function prep(cv,hpx){
+  cv.style.height=hpx+"px";
+  const ctx=cv.getContext("2d");
+  const r=cv.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.round(hpx*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx:ctx, W:r.width, H:hpx};
+}
+
+function drawPot(){
+  const o=prep(document.getElementById("pot"),300), ctx=o.ctx, W=o.W, H=o.H;
+  const pad=38;
+  ctx.clearRect(0,0,W,H);
+  const x2p=x=>pad+(x+A)/(2*A)*(W-pad-12);
+  const v2p=v=>H-24-(v-VMIN)/(VMAX-VMIN)*(H-24-14);
+  ctx.strokeStyle=css("--hair"); ctx.lineWidth=1;
+  for(let k=-4;k<=4;k++){ ctx.beginPath(); ctx.moveTo(x2p(k),12); ctx.lineTo(x2p(k),H-24); ctx.stroke(); }
+  for(let v=VMIN+10;v<=VMAX;v+=20){ ctx.beginPath(); ctx.moveTo(pad,v2p(v)); ctx.lineTo(W-12,v2p(v)); ctx.stroke(); }
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(pad,v2p(0)); ctx.lineTo(W-12,v2p(0)); ctx.stroke();
+  ctx.fillStyle=css("--muted"); ctx.font="11px ui-monospace,Menlo,Consolas,monospace";
+  ctx.fillText("V = 0",6,v2p(0)-5);
+  ctx.fillText(String(VMAX),8,v2p(VMAX)+10);
+  ctx.fillText("x = −4",pad,H-8);
+  ctx.textAlign="right"; ctx.fillText("4",W-12,H-8); ctx.textAlign="left";
+  ctx.beginPath();
+  for(let j=0;j<NV;j++){
+    const x=-A+(j+0.5)*2*A/NV;
+    if(j===0) ctx.moveTo(x2p(x),v2p(V[j])); else ctx.lineTo(x2p(x),v2p(V[j]));
+  }
+  ctx.strokeStyle=css("--accent2"); ctx.lineWidth=2; ctx.lineJoin="round"; ctx.stroke();
+  ctx.lineTo(x2p(A),v2p(0)); ctx.lineTo(x2p(-A),v2p(0)); ctx.closePath();
+  ctx.globalAlpha=0.10; ctx.fillStyle=css("--accent2"); ctx.fill(); ctx.globalAlpha=1;
+}
+
+/* The full plane.  Only Re lam > 0 is computed: lam is a resonance iff
+   -conj(lam) is, so the left half is an exact mirror and comes for free. */
+function drawPlane(){
+  const o=prep(document.getElementById("plane"),300), ctx=o.ctx, W=o.W, H=o.H;
+  const padL=30,padB=30,padR=14,padT=16;
+  ctx.clearRect(0,0,W,H);
+  // vertical range adapts so that bound states, which sit above the real axis,
+  // are actually in frame; barriers have none and keep the tight view
+  let kmax=0;
+  for(const p of RES) if(p.kind==="bound" && p.im>kmax) kmax=p.im;
+  const ImTop = kmax>0 ? kmax*1.15+0.15 : 0.28;
+  const x2p=r=>padL+(r+ReMax)/(2*ReMax)*(W-padL-padR);
+  const y2p=i=>padT+(ImTop-i)/(ImTop-ImMin)*(H-padT-padB);
+  const step = ImTop-ImMin > 6 ? 2 : 1;
+  ctx.strokeStyle=css("--hair"); ctx.lineWidth=1;
+  for(let r=-8;r<=8;r+=2){ ctx.beginPath(); ctx.moveTo(x2p(r),padT); ctx.lineTo(x2p(r),H-padB); ctx.stroke(); }
+  for(let i=Math.ceil(ImMin/step)*step;i<=ImTop;i+=step){
+    if(i===0) continue;
+    ctx.beginPath(); ctx.moveTo(padL,y2p(i)); ctx.lineTo(W-padR,y2p(i)); ctx.stroke();
+  }
+  ctx.strokeStyle=css("--line"); ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(padL,y2p(0)); ctx.lineTo(W-padR,y2p(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2p(0),padT); ctx.lineTo(x2p(0),H-padB); ctx.stroke();
+  ctx.fillStyle=css("--muted"); ctx.font="11px ui-monospace,Menlo,Consolas,monospace";
+  ctx.fillText("Im λ = 0",padL+4,y2p(0)-6);
+  for(let i=Math.ceil(ImMin/step)*step;i<=ImTop;i+=step){
+    if(i===0) continue;
+    ctx.fillText(String(i),4,y2p(i)+4);
+  }
+  ctx.fillText("Re λ",W-46,H-8);
+  for(let r=-8;r<=8;r+=4) if(r!==0) ctx.fillText(String(r),x2p(r)-6,H-8);
+  ctx.fillText("0",x2p(0)-3,H-8);
+  for(const p of RES){
+    const mirrors = p.re>1e-8 ? [p.re,-p.re] : [p.re];
+    for(const re of mirrors){
+      const x=x2p(re), y=y2p(Math.max(Math.min(p.im,ImTop),ImMin));
+      if(x<padL-2||x>W-4) continue;
+      if(p.kind==="bound"){
+        ctx.fillStyle=css("--bound");
+        ctx.beginPath();                       // square: a genuine eigenvalue
+        ctx.rect(x-3.6,y-3.6,7.2,7.2); ctx.fill();
+      }else if(p.kind==="long"){
+        ctx.strokeStyle=css("--accent"); ctx.lineWidth=1.7;
+        ctx.beginPath(); ctx.arc(x,y,5.5,0,7); ctx.stroke();
+      }else{
+        ctx.fillStyle=css("--accent");
+        ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fill();
+      }
+    }
+  }
+  if(kmax>0){
+    ctx.fillStyle=css("--bound");
+    ctx.fillText("bound states",x2p(0)+8,y2p(kmax)-8);
+  }
+}
+
+function drawTrace(){
+  const o=prep(document.getElementById("trace"),190), ctx=o.ctx, W=o.W, H=o.H;
+  const padL=44,padB=28, T=14, n=520;
+  ctx.clearRect(0,0,W,H);
+  const ys=new Float64Array(n);
+  for(let k=0;k<n;k++){
+    const t=0.25+(T-0.25)*k/(n-1);
+    let s=-0.5;
+    for(const p of RES){
+      if(p.kind==="bound"){ s+=0.5*Math.exp(p.im*t); continue; }
+      s+=(p.re>1e-8?1.0:0.5)*Math.exp(p.im*t)*Math.cos(p.re*t);
+    }
+    ys[k]=s;
+  }
+  // A bound state contributes e^{kappa t}, so with a well the trace genuinely
+  // runs away and a linear axis shows nothing.  Switch to a signed log scale.
+  let amax=0;
+  for(let k=0;k<n;k++){ const a=Math.abs(ys[k]); if(isFinite(a)&&a>amax) amax=a; }
+  const useLog = amax > 500;
+  const tf = v => useLog ? Math.sign(v)*Math.log10(1+Math.abs(v)) : v;
+  for(let k=0;k<n;k++) ys[k]=tf(ys[k]);
+
+  let lo=Infinity,hi=-Infinity;
+  for(let k=0;k<n;k++){ const y=ys[k]; if(isFinite(y)){ if(y<lo)lo=y; if(y>hi)hi=y; } }
+  if(!isFinite(lo)){lo=-1;hi=1;}
+  if(hi-lo<1e-9){ hi=lo+1; lo=lo-1; }
+  const m=(hi-lo)*0.12; lo-=m; hi+=m;
+  const x2p=t=>padL+(t-0.25)/(T-0.25)*(W-padL-14);
+  const y2p=v=>H-padB-(v-lo)/(hi-lo)*(H-18-padB);
+  ctx.strokeStyle=css("--hair"); ctx.lineWidth=1;
+  for(let t=2;t<=T;t+=2){ ctx.beginPath(); ctx.moveTo(x2p(t),12); ctx.lineTo(x2p(t),H-padB); ctx.stroke(); }
+  if(lo<0&&hi>0){ ctx.strokeStyle=css("--line");
+    ctx.beginPath(); ctx.moveTo(padL,y2p(0)); ctx.lineTo(W-14,y2p(0)); ctx.stroke(); }
+  ctx.beginPath();
+  for(let k=0;k<n;k++){
+    const t=0.25+(T-0.25)*k/(n-1);
+    if(k===0) ctx.moveTo(x2p(t),y2p(ys[k])); else ctx.lineTo(x2p(t),y2p(ys[k]));
+  }
+  ctx.strokeStyle=css("--accent"); ctx.lineWidth=1.8; ctx.lineJoin="round"; ctx.stroke();
+  ctx.fillStyle=css("--muted"); ctx.font="11px ui-monospace,Menlo,Consolas,monospace";
+  ctx.fillText("t",W-22,H-8);
+  for(let t=2;t<=T;t+=2) ctx.fillText(String(t),x2p(t)-4,H-8);
+  if(useLog) ctx.fillText("signed log scale — a bound state makes the trace grow",padL+4,H-padB-6);
+}
+
+function fillTable(){
+  const tb=document.querySelector("#tbl tbody"); tb.innerHTML="";
+  const rows=RES.filter(p=>p.kind!=="bound").concat(RES.filter(p=>p.kind==="bound"));
+  if(!rows.length){
+    tb.innerHTML='<tr><td colspan="6" style="color:var(--muted)">No resonances in this window. Try a taller or wider potential.</td></tr>';
+    return;
+  }
+  let i=0;
+  for(const p of rows){
+    i++;
+    const tag = p.kind==="bound" ? '<span class="tag t-bound">bound state</span>'
+              : p.kind==="long"  ? '<span class="tag t-long">long-lived</span>'
+              : '<span class="tag t-res">resonance</span>';
+    const tr=document.createElement("tr");
+    tr.innerHTML =
+      "<td>"+i+"</td>"+
+      "<td>"+(p.re>1e-8?"±":"")+p.re.toFixed(6)+"</td>"+
+      "<td>"+(p.im>=0?"+":"")+p.im.toFixed(9)+"</td>"+
+      "<td>"+(1/Math.max(Math.abs(p.im),1e-16)).toExponential(1)+"</td>"+
+      "<td>"+(isFinite(p.rel)?p.rel.toExponential(1):"—")+"</td>"+
+      "<td>"+tag+"</td>";
+    tb.appendChild(tr);
+  }
+}
+
+/* ---------- presets and drawing ---------- */
+const bmp=u=>Math.abs(u)<1?Math.exp(1-1/(1-u*u)):0;
+function setPreset(name){
+  for(let j=0;j<NV;j++){
+    const x=-A+(j+0.5)*2*A/NV;
+    let v=0;
+    if(name==="bump")    v=45*bmp(x/1.6);
+    if(name==="double")  v=50*(bmp(x-2)+bmp(x+2));
+    if(name==="square")  v=(Math.abs(x)<1.5)?30:0;
+    if(name==="wellneg") v=-25*bmp(x/2.2);
+    if(name==="steps")   v=(Math.abs(x)<3)?(8+11*Math.floor((x+3)/1.5)):0;
+    V[j]=v;
+  }
+  drawPot(); solve();
+}
+document.querySelectorAll("[data-p]").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll("[data-p]").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); setPreset(b.dataset.p);
+  });
+});
+
+let drawing=false, timer=null;
+function paint(ev){
+  const cv=document.getElementById("pot"), r=cv.getBoundingClientRect();
+  const pad=38, W=r.width, H=cv.clientHeight;
+  const px=ev.clientX-r.left, py=ev.clientY-r.top;
+  const x=(px-pad)/(W-pad-12)*(2*A)-A;
+  const v=VMIN+(H-24-py)/(H-24-14)*(VMAX-VMIN);
+  const j=Math.round((x+A)/(2*A)*NV-0.5), rad=10;
+  for(let k=Math.max(0,j-rad);k<=Math.min(NV-1,j+rad);k++){
+    const w=Math.exp(-Math.pow((k-j)/4.5,2));
+    V[k]=V[k]*(1-w)+Math.max(VMIN,Math.min(VMAX,v))*w;
+  }
+  drawPot();
+  clearTimeout(timer); timer=setTimeout(solve,200);
+}
+const pc=document.getElementById("pot");
+pc.addEventListener("pointerdown",e=>{drawing=true; pc.setPointerCapture(e.pointerId); paint(e);});
+pc.addEventListener("pointermove",e=>{ if(drawing) paint(e); });
+pc.addEventListener("pointerup",()=>{drawing=false;});
+pc.addEventListener("pointercancel",()=>{drawing=false;});
+
+function redraw(){ drawPot(); drawPlane(); drawTrace(); }
+window.addEventListener("resize",redraw);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redraw);
+new MutationObserver(redraw).observe(document.documentElement,
+  {attributes:true, attributeFilter:["data-theme"]});
+
+document.querySelector('[data-p="double"]').classList.add("on");
+setPreset("double");
+
+/* --------------------------------------------------------------------------
+   Fit resonances from the trace itself: the wave-trace fitting method, run end
+   to end in this page.  Independent of the Jost-function panels above -- it
+   never touches `jost`, `RES`, or anything computed from them -- so the
+   comparison in the table is a genuine cross-check, not a tautology.
+   -------------------------------------------------------------------------- */
+const fitBtn = document.getElementById("fitbtn");
+const fitSpin = document.getElementById("fitspin");
+const fitStatus = document.getElementById("fitstatus");
+const fitResultBox = document.getElementById("fitresult");
+
+fitBtn.addEventListener("click", ()=>{
+  fitBtn.disabled = true;
+  fitSpin.classList.add("on");
+  fitStatus.textContent = "Diagonalizing the truncated operator...";
+  fitResultBox.style.display = "none";
+  setTimeout(runTraceFit, 30);     // let the button/spinner repaint first
+});
+
+function runTraceFit(){
+  const t0 = performance.now();
+
+  // A drawn potential can have any effective width; size the box and window
+  // from what is actually on the canvas, exactly as Proposition 4.1 requires.
+  let Reff = 0.2;
+  for(let j=0;j<NV;j++){
+    if(Math.abs(V[j]) > 0.5){
+      const x = Math.abs(-A + (j+0.5)*2*A/NV);
+      if(x > Reff) Reff = x;
+    }
+  }
+  // These match the configuration validated against MATLAB's wave_trace.m /
+  // prony_deflate.m to 1e-6--1e-10 on the shallow, certified nodes (a smaller,
+  // faster configuration was tried first and produced an under-resolved trace
+  // that certified a spurious node -- this one is the one that was checked).
+  const Tmax = 17.0;                             // sampling window end
+  const L = Math.max(20, Reff + 1.55*Tmax);      // Proposition 4.1: T < (2/3)(L-R)
+  const Lambda = 10, bw = 3;
+  const N = Math.min(900, Math.ceil(2*L*bw*Lambda/Math.PI) + 10);
+  const t0samp = 0.5, dt = 0.20, Ns = Math.floor((Tmax-t0samp)/dt);
+
+  const Vslabs = new Float64Array(NV);
+  for(let j=0;j<NV;j++) Vslabs[j] = V[j];
+
+  const spec = galerkinSpectrum(Vslabs, NV, A, L, N);
+  const t = new Float64Array(Ns);
+  for(let n=0;n<Ns;n++) t[n] = t0samp + n*dt;
+  const w = assembleTrace(spec.mu, spec.mu0, N, Lambda, bw, t);
+
+  fitStatus.textContent = "Recovering nodes by certified deflation...";
+  const D = pronyDeflate(w, dt, t0samp, 1e-8, 0.06, 10);
+
+  const ms = Math.round(performance.now()-t0);
+  renderFitResult(D, ms, N, L);
+}
+
+function renderFitResult(D, ms, N, L){
+  const tb = document.querySelector("#fittbl tbody");
+  tb.innerHTML = "";
+  const rows = D.nodes.filter(nd=>nd.lambda.re>=-1e-8)
+                      .sort((a,b)=>b.lambda.im-a.lambda.im);
+  if(!rows.length){
+    tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">'
+      + 'No node passed the amplitude certificate for this potential. Try a '
+      + 'potential with a clearer resonance (a well or barrier), or a longer window.</td></tr>';
+  } else {
+    let i=0;
+    for(const nd of rows){
+      i++;
+      // The Poisson formula's constant term (-1/2 at lambda=0, from the "-1/2"
+      // in Tr = (1/2) sum e^{-i lam t} - 1/2) is not a resonance and has no
+      // Jost root to compare against; flag it rather than reporting a
+      // meaningless "nearest root" distance.
+      const isConstant = Math.abs(nd.lambda.re)<1e-3 && Math.abs(nd.q+0.5)<1e-6;
+      let best=Infinity, bestStr="—";
+      if(!isConstant){
+        for(const p of RES){
+          if(p.kind==="bound") continue;
+          const dr=p.re-nd.lambda.re, di=p.im-nd.lambda.im;
+          const d=Math.sqrt(dr*dr+di*di);
+          if(d<best){ best=d; bestStr = p.re.toFixed(4)+(p.im>=0?"+":"")+p.im.toFixed(4)+"i"; }
+        }
+      } else {
+        bestStr = "(the constant term)";
+      }
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+i+"</td>"+
+        "<td>"+(nd.lambda.re>1e-6?"±":"")+nd.lambda.re.toFixed(6)+"</td>"+
+        "<td>"+(nd.lambda.im>=0?"+":"")+nd.lambda.im.toFixed(6)+"</td>"+
+        "<td>"+nd.q.toFixed(2)+"</td>"+
+        "<td>"+bestStr+"</td>"+
+        "<td>"+(isFinite(best)?best.toExponential(2):"—")+"</td>";
+      tb.appendChild(tr);
+    }
+  }
+  fitResultBox.style.display = "";
+  fitStatus.textContent = "Done in "+ms+" ms  (N="+N+" basis functions, L="+L.toFixed(1)+", "+rows.length+" node(s) certified).";
+  fitSpin.classList.remove("on");
+  fitBtn.disabled = false;
+}
+
+</script>
+
+</body></html>

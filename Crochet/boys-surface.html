@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boy's Surface as an Immersion of RP^2</title>
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+};
+</script>
+<script id="MathJax-script" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+<style>
+  :root {
+    --bg: #f1f1f1;
+    --card: #ffffff;
+    --ink: #1c1c1c;
+    --muted: #5c5c5c;
+    --line: #d8d8d8;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { text-align: center; font-weight: 400; margin: 8px 0 4px; }
+  .sub { text-align: center; color: var(--muted); margin: 0 0 24px; }
+  .card {
+    background: var(--card);
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.16);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .panes { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
+  .pane { flex: 1 1 420px; min-width: 320px; }
+  .pane h2 { font-size: 1.05rem; font-weight: 500; margin: 0 0 4px; }
+  .pane p.hint { margin: 0 0 12px; color: var(--muted); font-size: .88rem; min-height: 2.6em; }
+  .canvasbox { position: relative; }
+  canvas { display: block; width: 100%; height: auto; border-radius: 3px; touch-action: none; }
+  #squareCanvas { background: #fff; cursor: crosshair; }
+  #squareCanvas.snake { cursor: default; }
+  #surfaceCanvas { background: #fafafa; cursor: grab; }
+  #surfaceCanvas.dragging { cursor: grabbing; }
+  #overlay {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(255,255,255,.82); border-radius: 3px;
+    text-align: center; font-size: 1.05rem;
+  }
+  #overlay.show { display: flex; }
+  #overlay div { max-width: 80%; }
+  .controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-top: 14px; font-size: .9rem; }
+  .controls label { display: flex; align-items: center; gap: 7px; color: var(--muted); }
+  input[type=range] { width: 120px; }
+  button {
+    font: inherit; font-size: .88rem; padding: 5px 12px; cursor: pointer;
+    background: #fff; border: 1px solid var(--line); border-radius: 3px;
+  }
+  button:hover { background: #f4f4f4; }
+  button.primary { background: #1565c0; border-color: #1565c0; color: #fff; }
+  button.primary:hover { background: #12539f; }
+  .score { font-weight: 500; color: var(--ink); }
+  .controls label.disabled { opacity: .45; }
+  .stepper { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+  .stepper.disabled { opacity: .45; }
+  .stepper button { padding: 3px 10px; line-height: 1; }
+  #lenVal {
+    display: inline-block; min-width: 2.6em; text-align: center; color: var(--ink);
+    font-variant-numeric: tabular-nums; font-weight: 500;
+  }
+  button.frozen { background: #ef6c00; border-color: #ef6c00; color: #fff; }
+  button.frozen:hover { background: #d96100; }
+  a { color: #1565c0; }
+  .note { font-size: .95rem; }
+  kbd {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem;
+    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px;
+    padding: 1px 5px; background: #fafafa;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Boy's surface as an immersion of $\mathbb{RP}^2$</h1>
+  <p class="sub">Drag the dot on the square &mdash; or play Snake on it &mdash; and watch what happens on the surface.</p>
+
+  <div class="card">
+    <div class="panes">
+
+      <div class="pane">
+        <h2>The square ($\mathbb{RP}^2$)</h2>
+        <p class="hint" id="leftHint">Drag the dot. Push it off an edge and it reappears at the <em>mirrored</em> spot on the opposite edge &mdash; that is the gluing rule. The hollow dot is the antipodal partner point.</p>
+        <div class="canvasbox">
+          <canvas id="squareCanvas" width="760" height="760"></canvas>
+          <div id="overlay"><div id="overlayText"></div></div>
+        </div>
+      </div>
+
+      <div class="pane">
+        <h2>Boy's surface (in $\mathbb{R}^3$)</h2>
+        <p class="hint">Drag to rotate, scroll to zoom. The colours match the square, so you can see which patch goes where. Anything hidden behind the surface really is behind it.</p>
+        <canvas id="surfaceCanvas" width="760" height="760"></canvas>
+      </div>
+
+    </div>
+
+    <div class="controls">
+      <button id="snakeBtn" class="primary">play snake</button>
+      <span class="score" id="score"></span>
+      <label>speed <input type="range" id="speedSlider" min="2" max="14" step="1" value="6"></label>
+      <button id="cheatBtn">cheat</button>
+      <span id="lenStepper" class="stepper disabled" title="freeze the snake first, then lengthen it one segment at a time">
+        length
+        <button id="lenMinus" disabled>&minus;</button><span id="lenVal">3</span><button id="lenPlus" disabled>+</button>
+      </span>
+      <label>opacity <input type="range" id="opacitySlider" min="15" max="100" step="1" value="100"></label>
+      <label>mesh <input type="range" id="resSlider" min="16" max="120" step="4" value="64"></label>
+      <label><input type="checkbox" id="wireChk"> wireframe</label>
+      <label><input type="checkbox" id="edgeChk" checked> image of the square's edge</label>
+      <label><input type="checkbox" id="spinChk"> spin</label>
+      <button id="resetBtn">reset view</button>
+    </div>
+  </div>
+
+  <div class="card note">
+    <p>The square is $[-1,1]^2$ with $p \sim -p$ on the boundary: the polygon $abab$ presenting
+    $\mathbb{RP}^2$.</p>
+
+    <p>It is carried to $\overline{\mathbb{D}}$ by the odd map
+    $$(u,v) \;\longmapsto\; w \;=\; \frac{\max(|u|,|v|)}{\sqrt{u^2+v^2}}\,(u+iv),$$
+    and then to $\mathbb{R}^3$ by the Bryant&ndash;Kusner parametrization of Boy's surface: with
+    $D = w^6 + \sqrt{5}\,w^3 - 1$,
+    $$g_1 = -\tfrac{3}{2}\operatorname{Im}\!\left[\frac{w(1-w^4)}{D}\right], \quad
+      g_2 = -\tfrac{3}{2}\operatorname{Re}\!\left[\frac{w(1+w^4)}{D}\right], \quad
+      g_3 = \operatorname{Im}\!\left[\frac{1+w^6}{D}\right] - \tfrac{1}{2}, \quad
+      P = \frac{(g_1,g_2,g_3)}{g_1^2+g_2^2+g_3^2}.$$
+    Since $P(w) = P(-1/\bar w)$, this descends to $\mathbb{RP}^2$.</p>
+
+    <p style="margin-bottom:0"><a href="index.html">&larr; back to Mathematical Crochet</a></p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- complex arithmetic ----------
+  function cmul(a, b) { return [a[0]*b[0] - a[1]*b[1], a[0]*b[1] + a[1]*b[0]]; }
+  function cdiv(a, b) {
+    var d = b[0]*b[0] + b[1]*b[1];
+    return [(a[0]*b[0] + a[1]*b[1]) / d, (a[1]*b[0] - a[0]*b[1]) / d];
+  }
+  var SQRT5 = Math.sqrt(5);
+
+  // ---------- Bryant-Kusner parametrization of Boy's surface ----------
+  function boyPoint(w) {
+    var w2 = cmul(w, w), w3 = cmul(w2, w), w4 = cmul(w3, w), w6 = cmul(w3, w3);
+    var D = [w6[0] + SQRT5*w3[0] - 1, w6[1] + SQRT5*w3[1]];
+
+    var n1 = cmul(w, [1 - w4[0], -w4[1]]);
+    var n2 = cmul(w, [1 + w4[0],  w4[1]]);
+    var n3 = [1 + w6[0], w6[1]];
+
+    var g1 = -1.5 * cdiv(n1, D)[1];
+    var g2 = -1.5 * cdiv(n2, D)[0];
+    var g3 =        cdiv(n3, D)[1] - 0.5;
+
+    var s = g1*g1 + g2*g2 + g3*g3;
+    if (!isFinite(s) || s > 1e12 || s < 1e-12) return [0, 0, 0];
+    return [g1/s, g2/s, g3/s];
+  }
+
+  // ---------- square <-> disk ----------
+  function squareToDisk(u, v) {
+    var m = Math.max(Math.abs(u), Math.abs(v));
+    if (m < 1e-12) return [0, 0];
+    var r = Math.hypot(u, v);
+    var k = m / r;
+    return [u * k, v * k];
+  }
+
+  // ---------- colour field (constant on identified boundary points) ----------
+  function hueLight(u, v) {
+    var w = squareToDisk(u, v);
+    var r = Math.min(1, Math.hypot(w[0], w[1]));
+    var th = Math.atan2(w[1], w[0]);
+    var hue = ((2 * th) * 180 / Math.PI) % 360;
+    if (hue < 0) hue += 360;
+    return [hue, 34 + 40 * r];
+  }
+  function colorFor(u, v) {
+    var hl = hueLight(u, v);
+    return "hsl(" + hl[0].toFixed(1) + ",62%," + hl[1].toFixed(1) + "%)";
+  }
+  function shadeColor(u, v, lambert, alpha) {
+    var hl = hueLight(u, v);
+    var light = Math.max(6, Math.min(93, hl[1] * (0.45 + 0.75 * lambert)));
+    if (alpha === undefined || alpha >= 1) {
+      return "hsl(" + hl[0].toFixed(1) + ",62%," + light.toFixed(1) + "%)";
+    }
+    return "hsla(" + hl[0].toFixed(1) + ",62%," + light.toFixed(1) + "%," + alpha.toFixed(3) + ")";
+  }
+
+  // ---------- state ----------
+  var dot = { u: 0.42, v: -0.30 };
+  var view = { yaw: 0.7, pitch: 0.45, zoom: 1 };
+  var spin = false, wire = false, showEdge = true;
+  var opacity = 1;
+  var N = 64;
+
+  var sqCanvas = document.getElementById("squareCanvas");
+  var sqCtx = sqCanvas.getContext("2d");
+  var suCanvas = document.getElementById("surfaceCanvas");
+  var suCtx = suCanvas.getContext("2d");
+  var scoreEl = document.getElementById("score");
+  var overlay = document.getElementById("overlay");
+  var overlayText = document.getElementById("overlayText");
+  var leftHint = document.getElementById("leftHint");
+
+  // ---------- mesh ----------
+  var mesh = null;
+  function buildMesh(res) {
+    var NR = Math.max(6, Math.round(res * 0.55));
+    var NT = Math.max(12, res);
+    var verts = [], uvs = [];
+    for (var i = 0; i <= NR; i++) {
+      var r = i / NR;
+      for (var j = 0; j < NT; j++) {
+        var th = 2 * Math.PI * j / NT;
+        verts.push(boyPoint([r * Math.cos(th), r * Math.sin(th)]));
+        var m = Math.max(Math.abs(Math.cos(th)), Math.abs(Math.sin(th)));
+        uvs.push([r * Math.cos(th) / m, r * Math.sin(th) / m]);
+      }
+    }
+    var maxR = 0;
+    for (var k = 0; k < verts.length; k++) {
+      var d = Math.hypot(verts[k][0], verts[k][1], verts[k][2]);
+      if (d > maxR) maxR = d;
+    }
+    var sc = maxR > 0 ? 1 / maxR : 1;
+    for (var k2 = 0; k2 < verts.length; k2++) {
+      verts[k2][0] *= sc; verts[k2][1] *= sc; verts[k2][2] *= sc;
+    }
+    var faces = [];
+    for (var i2 = 0; i2 < NR; i2++) {
+      for (var j2 = 0; j2 < NT; j2++) {
+        var j3 = (j2 + 1) % NT;
+        faces.push([i2*NT + j2, i2*NT + j3, (i2+1)*NT + j3, (i2+1)*NT + j2]);
+      }
+    }
+    var edgeLoop = [], ME = 600;
+    for (var e = 0; e <= ME; e++) {
+      var th2 = 2 * Math.PI * e / ME;
+      var pe = boyPoint([Math.cos(th2), Math.sin(th2)]);
+      edgeLoop.push([pe[0]*sc, pe[1]*sc, pe[2]*sc]);
+    }
+    mesh = { verts: verts, uvs: uvs, faces: faces, scale: sc, edge: edgeLoop };
+  }
+
+  function surfacePoint(u, v) {
+    var p = boyPoint(squareToDisk(u, v));
+    var s = mesh ? mesh.scale : 1;
+    return [p[0]*s, p[1]*s, p[2]*s];
+  }
+
+  // ---------- 3D helpers ----------
+  function rotate(p, yaw, pitch) {
+    var cy = Math.cos(yaw), sy = Math.sin(yaw);
+    var x1 =  p[0]*cy + p[2]*sy;
+    var z1 = -p[0]*sy + p[2]*cy;
+    var cp = Math.cos(pitch), sp = Math.sin(pitch);
+    return [x1, p[1]*cp - z1*sp, p[1]*sp + z1*cp];
+  }
+  function project(p, W, H, zoom) {
+    var d = 4.2;
+    var f = d / (d - p[2] * 0.85);
+    var s = Math.min(W, H) * 0.36 * zoom * f;
+    return [W/2 + p[0]*s, H/2 - p[1]*s, p[2]];
+  }
+
+  // =======================================================================
+  //  SNAKE
+  // =======================================================================
+  var GRID = 21;                     // cells per side
+  var snake = {
+    on: false, dead: false, won: false, paused: false,
+    cells: [], dir: [1, 0], pending: [1, 0],
+    food: null, score: 0, acc: 0, stepsPerSec: 6
+  };
+
+  function cellCenter(i, j) {
+    return [-1 + (2*i + 1) / GRID, -1 + (2*j + 1) / GRID];
+  }
+
+  // Move one cell, applying the RP^2 identification to BOTH position and direction.
+  // Crossing a vertical edge flips the vertical velocity component, and vice versa,
+  // so the snake keeps travelling forwards instead of reversing.
+  function stepCell(i, j, di, dj) {
+    i += di; j += dj;
+    if (i >= GRID) { i -= GRID; j = GRID - 1 - j; dj = -dj; }
+    else if (i < 0) { i += GRID; j = GRID - 1 - j; dj = -dj; }
+    else if (j >= GRID) { j -= GRID; i = GRID - 1 - i; di = -di; }
+    else if (j < 0) { j += GRID; i = GRID - 1 - i; di = -di; }
+    return { i: i, j: j, di: di, dj: dj };
+  }
+
+  function placeFood() {
+    var occupied = {};
+    for (var k = 0; k < snake.cells.length; k++) occupied[snake.cells[k].i + "," + snake.cells[k].j] = 1;
+    var free = [];
+    for (var i = 0; i < GRID; i++) for (var j = 0; j < GRID; j++) {
+      if (!occupied[i + "," + j]) free.push({ i: i, j: j });
+    }
+    if (!free.length) { snake.food = null; snake.won = true; return; }
+    snake.food = free[Math.floor(Math.random() * free.length)];
+  }
+
+  function resetSnake() {
+    var mid = Math.floor(GRID / 2);
+    snake.cells = [{ i: mid, j: mid }, { i: mid - 1, j: mid }, { i: mid - 2, j: mid }];
+    snake.dir = [1, 0];
+    snake.pending = [1, 0];
+    snake.score = 0;
+    snake.dead = false;
+    snake.won = false;
+    snake.acc = 0;
+    placeFood();
+    overlay.classList.remove("show");
+    setFrozen(false);
+  }
+
+  function updateScore() {
+    if (!snake.on) { scoreEl.textContent = ""; return; }
+    scoreEl.textContent = "score " + snake.score + (snake.paused ? "  ·  frozen" : "");
+    document.getElementById("lenVal").textContent = String(snake.cells.length);
+    document.getElementById("lenPlus").disabled  = !snake.paused || !canGrowTail();
+    document.getElementById("lenMinus").disabled = !snake.paused || snake.cells.length <= 3;
+  }
+
+  // Grow by one cell at the tail, into a genuinely free neighbouring cell, so the body
+  // is always a path the snake could have walked. Returns false once the tail is boxed
+  // in, which is what stops the cheat slider from going any further.
+  function findTailGrowth() {
+    var n = snake.cells.length;
+    var tail = snake.cells[n - 1];
+    var prev = n > 1 ? snake.cells[n - 2] : null;
+    var occ = {};
+    for (var k = 0; k < n; k++) occ[snake.cells[k].i + "," + snake.cells[k].j] = 1;
+
+    // keep the cell straight ahead of the head clear, so the snake is not walled in
+    // by its own cheated tail the moment play resumes
+    var head = snake.cells[0];
+    var ahead = stepCell(head.i, head.j, snake.dir[0], snake.dir[1]);
+
+    // Distance on the grid, measured through the identification, so "away from the
+    // head" means away on the surface rather than merely on the printed square.
+    function distToHead(c) {
+      var best = Infinity;
+      for (var a = -1; a <= 1; a++) {
+        for (var b = -1; b <= 1; b++) {
+          // the four sheets reachable by one wrap, plus the plain copy
+          var ii = c.i + a * GRID, jj = c.j + b * GRID;
+          var i2 = (a % 2 !== 0) ? (GRID - 1 - c.j) + b * GRID : ii;
+          var d1 = Math.hypot(ii - head.i, jj - head.j);
+          var d2 = Math.hypot(i2 - head.i, jj - head.j);
+          best = Math.min(best, d1, d2);
+        }
+      }
+      return best;
+    }
+
+    var dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+    var pick = null, pickScore = -Infinity;
+    for (var d = 0; d < 4; d++) {
+      var s = stepCell(tail.i, tail.j, dirs[d][0], dirs[d][1]);
+      if (occ[s.i + "," + s.j]) continue;
+      if (s.i === ahead.i && s.j === ahead.j) continue;
+      if (snake.food && s.i === snake.food.i && s.j === snake.food.j) continue;
+
+      // grow away from the head, and prefer carrying straight on for a tidy body
+      var score = distToHead(s);
+      if (prev) {
+        var back = stepCell(prev.i, prev.j, dirs[d][0], dirs[d][1]);
+        if (back.i === tail.i && back.j === tail.j) score += 0.75;
+      }
+      if (score > pickScore) { pickScore = score; pick = s; }
+    }
+    return pick;
+  }
+
+  function canGrowTail() { return snake.on && snake.cells.length > 0 && !!findTailGrowth(); }
+
+  function growTail() {
+    var pick = findTailGrowth();
+    if (!pick) return false;
+    snake.cells.push({ i: pick.i, j: pick.j });
+    return true;
+  }
+
+  // Cheat: set the length directly. Returns the length actually reached, which may be
+  // short of what was asked for if the tail runs out of room.
+  function setSnakeLength(n) {
+    n = Math.max(3, Math.min(GRID * GRID, n | 0));
+    var guard = 0;
+    while (snake.cells.length < n && guard++ < GRID * GRID) {
+      if (!growTail()) break;
+    }
+    while (snake.cells.length > n && snake.cells.length > 3) snake.cells.pop();
+    updateScore();
+    draw();
+    return snake.cells.length;
+  }
+
+  // On resuming, if the head is facing into the body, turn it to a free side rather
+  // than letting a cheated tail kill the snake on the very first step.
+  function ensureEscape() {
+    if (!snake.on || snake.dead || snake.won || snake.cells.length < 2) return true;
+    var h = snake.cells[0];
+    var occ = {};
+    for (var k = 0; k < snake.cells.length; k++) occ[snake.cells[k].i + "," + snake.cells[k].j] = 1;
+    var tail = snake.cells[snake.cells.length - 1];
+    delete occ[tail.i + "," + tail.j];        // the tail vacates as we move
+
+    var d = snake.dir;
+    var options = [d, [-d[1], d[0]], [d[1], -d[0]]];   // straight on, then either side
+    for (var o = 0; o < options.length; o++) {
+      var n = stepCell(h.i, h.j, options[o][0], options[o][1]);
+      if (!occ[n.i + "," + n.j]) {
+        snake.dir = options[o].slice();
+        snake.pending = snake.dir.slice();
+        return true;
+      }
+    }
+    return false;                              // genuinely boxed in
+  }
+
+  function setFrozen(on) {
+    if (!on && snake.paused) ensureEscape();
+    snake.paused = on;
+    var btn = document.getElementById("cheatBtn");
+    btn.textContent = on ? "resume" : "cheat";
+    btn.classList.toggle("frozen", on);
+    document.getElementById("lenStepper").classList.toggle("disabled", !on);
+    if (on) snake.acc = 0;
+    updateScore();
+  }
+
+  function snakeTick() {
+    if (snake.dead || snake.won) return;
+
+    // apply the queued turn, refusing an immediate reversal
+    var p = snake.pending, d = snake.dir;
+    if (!(snake.cells.length > 1 && p[0] === -d[0] && p[1] === -d[1])) snake.dir = p.slice();
+
+    var head = snake.cells[0];
+    var nxt = stepCell(head.i, head.j, snake.dir[0], snake.dir[1]);
+    snake.dir = [nxt.di, nxt.dj];
+    snake.pending = snake.dir.slice();
+
+    var ate = snake.food && nxt.i === snake.food.i && nxt.j === snake.food.j;
+
+    // self-collision (the tail cell vacates unless we just ate)
+    var limit = ate ? snake.cells.length : snake.cells.length - 1;
+    for (var k = 0; k < limit; k++) {
+      if (snake.cells[k].i === nxt.i && snake.cells[k].j === nxt.j) {
+        snake.dead = true;
+        overlayText.innerHTML = "<strong>You ran into yourself.</strong><br>score " + snake.score +
+          "<br><span style='font-size:.85rem'>press an arrow key to play again</span>";
+        overlay.classList.add("show");
+        return;
+      }
+    }
+
+    snake.cells.unshift({ i: nxt.i, j: nxt.j });
+    if (ate) { snake.score++; placeFood(); } else { snake.cells.pop(); }
+
+    if (snake.won) {
+      overlayText.innerHTML = "<strong>You filled all of $\\mathbb{RP}^2$.</strong><br>score " + snake.score;
+      overlay.classList.add("show");
+    }
+
+    var c = cellCenter(nxt.i, nxt.j);
+    dot.u = c[0]; dot.v = c[1];
+    updateScore();
+  }
+
+  function setSnakeMode(on) {
+    snake.on = on;
+    document.getElementById("snakeBtn").textContent = on ? "stop snake" : "play snake";
+    sqCanvas.classList.toggle("snake", on);
+    if (on) {
+      resetSnake();
+      leftHint.innerHTML = "Steer with <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd> (or WASD). " +
+        "Leave through an edge and you come back on the opposite one, mirrored &mdash; watch the right pane to see that nothing actually happens there.";
+    } else {
+      overlay.classList.remove("show");
+      setFrozen(false);
+      leftHint.innerHTML = "Drag the dot. Push it off an edge and it reappears at the <em>mirrored</em> spot on the opposite edge &mdash; that is the gluing rule. The hollow dot is the antipodal partner point.";
+    }
+    updateScore();
+    draw();
+  }
+
+  document.addEventListener("keydown", function (ev) {
+    var k = ev.key;
+    var map = {
+      ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1],
+      a: [-1, 0], d: [1, 0], w: [0, 1], s: [0, -1],
+      A: [-1, 0], D: [1, 0], W: [0, 1], S: [0, -1]
+    };
+    if (!(k in map)) return;
+    if (!snake.on) return;
+    ev.preventDefault();
+    if (snake.dead || snake.won) { resetSnake(); return; }
+    snake.pending = map[k];
+  }, { passive: false });
+
+  // ---------- draw: square pane ----------
+  function squareGeom() {
+    var W = sqCanvas.width, H = sqCanvas.height, pad = 74;
+    var S = Math.min(W, H) - 2*pad;
+    return { W: W, H: H, S: S, x0: (W - S) / 2, y0: (H - S) / 2 };
+  }
+
+  function drawSquare() {
+    var g = squareGeom();
+    sqCtx.clearRect(0, 0, g.W, g.H);
+    sqCtx.fillStyle = "#fff";
+    sqCtx.fillRect(0, 0, g.W, g.H);
+
+    // colour field
+    var cells = 84, cw = g.S / cells;
+    for (var i = 0; i < cells; i++) {
+      for (var j = 0; j < cells; j++) {
+        var u = -1 + 2 * (i + 0.5) / cells;
+        var v =  1 - 2 * (j + 0.5) / cells;
+        sqCtx.fillStyle = colorFor(u, v);
+        sqCtx.fillRect(g.x0 + i*cw - 0.5, g.y0 + j*cw - 0.5, cw + 1, cw + 1);
+      }
+    }
+
+    function toPix(u, v) { return [g.x0 + (u + 1)/2 * g.S, g.y0 + (1 - v)/2 * g.S]; }
+
+    if (snake.on) {
+      // faint grid
+      sqCtx.strokeStyle = "rgba(255,255,255,.22)";
+      sqCtx.lineWidth = 1;
+      for (var q = 1; q < GRID; q++) {
+        var t = g.x0 + q * g.S / GRID;
+        sqCtx.beginPath(); sqCtx.moveTo(t, g.y0); sqCtx.lineTo(t, g.y0 + g.S); sqCtx.stroke();
+        var t2 = g.y0 + q * g.S / GRID;
+        sqCtx.beginPath(); sqCtx.moveTo(g.x0, t2); sqCtx.lineTo(g.x0 + g.S, t2); sqCtx.stroke();
+      }
+      var cell = g.S / GRID, inset = cell * 0.10;
+
+      // food
+      if (snake.food) {
+        var fc = cellCenter(snake.food.i, snake.food.j);
+        var fp = toPix(fc[0], fc[1]);
+        sqCtx.fillStyle = "#c62828";
+        sqCtx.fillRect(fp[0] - cell/2 + inset, fp[1] - cell/2 + inset, cell - 2*inset, cell - 2*inset);
+        sqCtx.fillStyle = "#2e7d32";
+        sqCtx.fillRect(fp[0] - cell*0.07, fp[1] - cell/2 - cell*0.14, cell*0.14, cell*0.2);
+      }
+
+      // body
+      for (var s = snake.cells.length - 1; s >= 0; s--) {
+        var cc = cellCenter(snake.cells[s].i, snake.cells[s].j);
+        var cp = toPix(cc[0], cc[1]);
+        sqCtx.fillStyle = (s === 0) ? "#12351a" : "#1f6b2c";
+        sqCtx.fillRect(cp[0] - cell/2 + inset, cp[1] - cell/2 + inset, cell - 2*inset, cell - 2*inset);
+        if (s === 0) {
+          sqCtx.fillStyle = "#fff";
+          var ex = cp[0] + snake.dir[0] * cell * 0.16 - cell * 0.07;
+          var ey = cp[1] - snake.dir[1] * cell * 0.16 - cell * 0.07;
+          sqCtx.fillRect(ex, ey, cell * 0.14, cell * 0.14);
+        }
+      }
+    }
+
+    // edge identification arrows: a on the vertical pair, b on the horizontal pair
+    function arrow(ax, ay, bx, by, col, label) {
+      sqCtx.strokeStyle = col; sqCtx.fillStyle = col;
+      sqCtx.lineWidth = 5; sqCtx.lineCap = "round";
+      sqCtx.beginPath(); sqCtx.moveTo(ax, ay); sqCtx.lineTo(bx, by); sqCtx.stroke();
+      var ang = Math.atan2(by - ay, bx - ax), hl = 20;
+      sqCtx.beginPath();
+      sqCtx.moveTo(bx, by);
+      sqCtx.lineTo(bx - hl*Math.cos(ang - 0.42), by - hl*Math.sin(ang - 0.42));
+      sqCtx.lineTo(bx - hl*Math.cos(ang + 0.42), by - hl*Math.sin(ang + 0.42));
+      sqCtx.closePath(); sqCtx.fill();
+      if (label) {
+        sqCtx.font = "italic 30px Georgia, serif";
+        sqCtx.textAlign = "center"; sqCtx.textBaseline = "middle";
+        sqCtx.fillText(label.t, label.x, label.y);
+      }
+    }
+    var RED = "#d32f2f", BLUE = "#1565c0";
+    arrow(g.x0, g.y0 + g.S, g.x0, g.y0, RED, { t: "a", x: g.x0 - 34, y: g.y0 + g.S/2 });
+    arrow(g.x0 + g.S, g.y0, g.x0 + g.S, g.y0 + g.S, RED, { t: "a", x: g.x0 + g.S + 34, y: g.y0 + g.S/2 });
+    arrow(g.x0, g.y0 + g.S, g.x0 + g.S, g.y0 + g.S, BLUE, { t: "b", x: g.x0 + g.S/2, y: g.y0 + g.S + 36 });
+    arrow(g.x0 + g.S, g.y0, g.x0, g.y0, BLUE, { t: "b", x: g.x0 + g.S/2, y: g.y0 - 36 });
+
+    if (!snake.on) {
+      var pa = toPix(-dot.u, -dot.v);
+      sqCtx.beginPath(); sqCtx.arc(pa[0], pa[1], 11, 0, 2*Math.PI);
+      sqCtx.lineWidth = 3.5; sqCtx.strokeStyle = "rgba(20,20,20,.72)"; sqCtx.stroke();
+
+      var pd = toPix(dot.u, dot.v);
+      sqCtx.beginPath(); sqCtx.arc(pd[0], pd[1], 13, 0, 2*Math.PI);
+      sqCtx.fillStyle = "#111"; sqCtx.fill();
+      sqCtx.lineWidth = 4; sqCtx.strokeStyle = "#fff"; sqCtx.stroke();
+    }
+  }
+
+  // ---------- draw: surface pane ----------
+  function drawSurface() {
+    var W = suCanvas.width, H = suCanvas.height;
+    suCtx.clearRect(0, 0, W, H);
+    suCtx.fillStyle = "#fafafa";
+    suCtx.fillRect(0, 0, W, H);
+    if (!mesh) return;
+
+    var rv = new Array(mesh.verts.length);
+    for (var i = 0; i < mesh.verts.length; i++) rv[i] = rotate(mesh.verts[i], view.yaw, view.pitch);
+
+    var L = [0.35, 0.55, 0.76];
+    var Ln = Math.hypot(L[0], L[1], L[2]);
+    L = [L[0]/Ln, L[1]/Ln, L[2]/Ln];
+
+    // Everything that gets drawn goes into one list and is painted back to front,
+    // so markers are correctly hidden when they pass behind the surface.
+    var items = [];
+    for (var f = 0; f < mesh.faces.length; f++) {
+      var q = mesh.faces[f];
+      items.push({
+        z: (rv[q[0]][2] + rv[q[1]][2] + rv[q[2]][2] + rv[q[3]][2]) / 4,
+        kind: 0, face: q
+      });
+    }
+
+    function addMarker(u, v, fill, radius) {
+      var p = rotate(surfacePoint(u, v), view.yaw, view.pitch);
+      items.push({ z: p[2] + 0.012, kind: 1, p: p, fill: fill, r: radius });
+      return p;
+    }
+
+    var headPos = null;
+    if (snake.on) {
+      if (snake.food) {
+        var fc = cellCenter(snake.food.i, snake.food.j);
+        addMarker(fc[0], fc[1], "#c62828", 11);
+      }
+      for (var s = snake.cells.length - 1; s >= 0; s--) {
+        var cc = cellCenter(snake.cells[s].i, snake.cells[s].j);
+        var col = (s === 0) ? "#12351a" : "#1f6b2c";
+        var pp = addMarker(cc[0], cc[1], col, s === 0 ? 12 : 9);
+        if (s === 0) headPos = pp;
+      }
+    } else {
+      addMarker(dot.u, dot.v, "#111", 13);
+    }
+
+    items.sort(function (a, b) { return a.z - b.z; });
+
+    for (var k = 0; k < items.length; k++) {
+      var it = items[k];
+      if (it.kind === 0) {
+        var q2 = it.face;
+        var A = rv[q2[0]], B = rv[q2[1]], C = rv[q2[2]], D = rv[q2[3]];
+        var ux = C[0]-A[0], uy = C[1]-A[1], uz = C[2]-A[2];
+        var vx = D[0]-B[0], vy = D[1]-B[1], vz = D[2]-B[2];
+        var nx = uy*vz - uz*vy, ny = uz*vx - ux*vz, nz = ux*vy - uy*vx;
+        var nl = Math.hypot(nx, ny, nz);
+        var lam = nl > 1e-12 ? Math.abs((nx*L[0] + ny*L[1] + nz*L[2]) / nl) : 0.5;
+
+        var pA = project(A, W, H, view.zoom), pB = project(B, W, H, view.zoom);
+        var pC = project(C, W, H, view.zoom), pD = project(D, W, H, view.zoom);
+        var uv = mesh.uvs[q2[0]];
+
+        // When the surface is transparent we cannot cover the seams between quads
+        // with a same-colour hairline, because the overlap would blend twice and
+        // show up as a dark grid. Instead nudge each quad outwards from its own
+        // centroid by a hair, which closes the cracks with a negligible overlap.
+        if (opacity < 1) {
+          var gx = (pA[0] + pB[0] + pC[0] + pD[0]) / 4;
+          var gy = (pA[1] + pB[1] + pC[1] + pD[1]) / 4;
+          var grow = 1.02;
+          pA = [gx + (pA[0]-gx)*grow, gy + (pA[1]-gy)*grow];
+          pB = [gx + (pB[0]-gx)*grow, gy + (pB[1]-gy)*grow];
+          pC = [gx + (pC[0]-gx)*grow, gy + (pC[1]-gy)*grow];
+          pD = [gx + (pD[0]-gx)*grow, gy + (pD[1]-gy)*grow];
+        }
+
+        suCtx.fillStyle = shadeColor(uv[0], uv[1], lam, opacity);
+        suCtx.beginPath();
+        suCtx.moveTo(pA[0], pA[1]); suCtx.lineTo(pB[0], pB[1]);
+        suCtx.lineTo(pC[0], pC[1]); suCtx.lineTo(pD[0], pD[1]);
+        suCtx.closePath();
+        suCtx.fill();
+        if (wire) {
+          suCtx.strokeStyle = "rgba(0,0,0,.28)";
+          suCtx.lineWidth = 0.6;
+          suCtx.stroke();
+        } else if (opacity >= 1) {
+          suCtx.strokeStyle = suCtx.fillStyle;
+          suCtx.lineWidth = 1;
+          suCtx.stroke();
+        }
+      } else {
+        var pm = project(it.p, W, H, view.zoom);
+        suCtx.beginPath(); suCtx.arc(pm[0], pm[1], it.r, 0, 2*Math.PI);
+        suCtx.fillStyle = it.fill; suCtx.fill();
+        suCtx.lineWidth = 3; suCtx.strokeStyle = "#fff"; suCtx.stroke();
+      }
+    }
+
+    // image of the square's boundary edge, drawn over the surface
+    if (showEdge) {
+      suCtx.strokeStyle = "rgba(15,15,15,.85)";
+      suCtx.lineWidth = 3;
+      suCtx.beginPath();
+      for (var e = 0; e < mesh.edge.length; e++) {
+        var pe = project(rotate(mesh.edge[e], view.yaw, view.pitch), W, H, view.zoom);
+        if (e === 0) suCtx.moveTo(pe[0], pe[1]); else suCtx.lineTo(pe[0], pe[1]);
+      }
+      suCtx.stroke();
+    }
+
+    // faint ring so the snake's head is never completely lost behind the surface
+    if (snake.on && headPos) {
+      var hp = project(headPos, W, H, view.zoom);
+      suCtx.beginPath(); suCtx.arc(hp[0], hp[1], 17, 0, 2*Math.PI);
+      suCtx.lineWidth = 2; suCtx.strokeStyle = "rgba(18,53,26,.45)"; suCtx.stroke();
+    }
+
+  }
+
+  function draw() { drawSquare(); drawSurface(); }
+
+  // ---------- dragging the dot ----------
+  function wrap(p) {
+    var guard = 0;
+    while (guard++ < 8) {
+      if (p.u >  1) { p.u -= 2; p.v = -p.v; continue; }
+      if (p.u < -1) { p.u += 2; p.v = -p.v; continue; }
+      if (p.v >  1) { p.v -= 2; p.u = -p.u; continue; }
+      if (p.v < -1) { p.v += 2; p.u = -p.u; continue; }
+      break;
+    }
+    return p;
+  }
+  function squarePos(ev) {
+    var rect = sqCanvas.getBoundingClientRect(), g = squareGeom();
+    var sx = (ev.clientX - rect.left) / rect.width * g.W;
+    var sy = (ev.clientY - rect.top) / rect.height * g.H;
+    return { u: (sx - g.x0) / g.S * 2 - 1, v: 1 - (sy - g.y0) / g.S * 2 };
+  }
+  var draggingDot = false;
+  sqCanvas.addEventListener("pointerdown", function (ev) {
+    if (snake.on) return;
+    draggingDot = true;
+    try { sqCanvas.setPointerCapture(ev.pointerId); } catch (e) {}
+    var p = squarePos(ev); dot.u = p.u; dot.v = p.v; wrap(dot); draw();
+  });
+  sqCanvas.addEventListener("pointermove", function (ev) {
+    if (!draggingDot || snake.on) return;
+    var p = squarePos(ev); dot.u = p.u; dot.v = p.v; wrap(dot); draw();
+  });
+  function endDrag(ev) {
+    draggingDot = false;
+    if (ev && ev.pointerId !== undefined) { try { sqCanvas.releasePointerCapture(ev.pointerId); } catch (e) {} }
+  }
+  sqCanvas.addEventListener("pointerup", endDrag);
+  sqCanvas.addEventListener("pointercancel", endDrag);
+
+  // ---------- rotating the surface ----------
+  var rotating = false, lastX = 0, lastY = 0;
+  suCanvas.addEventListener("pointerdown", function (ev) {
+    rotating = true; lastX = ev.clientX; lastY = ev.clientY;
+    suCanvas.classList.add("dragging");
+    try { suCanvas.setPointerCapture(ev.pointerId); } catch (e) {}
+  });
+  suCanvas.addEventListener("pointermove", function (ev) {
+    if (!rotating) return;
+    view.yaw   += (ev.clientX - lastX) * 0.008;
+    view.pitch += (ev.clientY - lastY) * 0.008;
+    view.pitch = Math.max(-1.5, Math.min(1.5, view.pitch));
+    lastX = ev.clientX; lastY = ev.clientY;
+    drawSurface();
+  });
+  function endRotate(ev) {
+    rotating = false;
+    suCanvas.classList.remove("dragging");
+    if (ev && ev.pointerId !== undefined) { try { suCanvas.releasePointerCapture(ev.pointerId); } catch (e) {} }
+  }
+  suCanvas.addEventListener("pointerup", endRotate);
+  suCanvas.addEventListener("pointercancel", endRotate);
+  suCanvas.addEventListener("wheel", function (ev) {
+    ev.preventDefault();
+    view.zoom *= ev.deltaY > 0 ? 0.92 : 1.08;
+    view.zoom = Math.max(0.35, Math.min(3.2, view.zoom));
+    drawSurface();
+  }, { passive: false });
+
+  // ---------- controls ----------
+  document.getElementById("snakeBtn").addEventListener("click", function () { setSnakeMode(!snake.on); });
+  document.getElementById("speedSlider").addEventListener("input", function (ev) {
+    snake.stepsPerSec = parseInt(ev.target.value, 10);
+  });
+  document.getElementById("cheatBtn").addEventListener("click", function () {
+    if (!snake.on) setSnakeMode(true);
+    if (snake.dead || snake.won) resetSnake();
+    setFrozen(!snake.paused);
+  });
+  document.getElementById("lenPlus").addEventListener("click", function () {
+    if (!snake.paused) return;
+    growTail();
+    updateScore();
+    draw();
+  });
+  document.getElementById("lenMinus").addEventListener("click", function () {
+    if (!snake.paused || snake.cells.length <= 3) return;
+    snake.cells.pop();
+    updateScore();
+    draw();
+  });
+  document.getElementById("opacitySlider").addEventListener("input", function (ev) {
+    opacity = parseInt(ev.target.value, 10) / 100; drawSurface();
+  });
+  document.getElementById("resSlider").addEventListener("input", function (ev) {
+    N = parseInt(ev.target.value, 10); buildMesh(N); drawSurface();
+  });
+  document.getElementById("wireChk").addEventListener("change", function (ev) {
+    wire = ev.target.checked; drawSurface();
+  });
+  document.getElementById("edgeChk").addEventListener("change", function (ev) {
+    showEdge = ev.target.checked; drawSurface();
+  });
+  document.getElementById("spinChk").addEventListener("change", function (ev) { spin = ev.target.checked; });
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    view.yaw = 0.7; view.pitch = 0.45; view.zoom = 1; drawSurface();
+  });
+
+  // ---------- main loop ----------
+  function advance(dt) {
+    var redraw = false;
+
+    if (spin && !rotating) { view.yaw += 0.5 * dt; redraw = true; }
+
+    if (snake.on && !snake.dead && !snake.won && !snake.paused) {
+      snake.acc += dt;
+      var interval = 1 / snake.stepsPerSec;
+      var moved = false;
+      while (snake.acc >= interval) { snake.acc -= interval; snakeTick(); moved = true; }
+      if (moved) { drawSquare(); redraw = true; }
+    }
+
+    if (redraw) drawSurface();
+    return redraw;
+  }
+
+  var last = performance.now();
+  function loop(now) {
+    var dt = Math.min(0.25, (now - last) / 1000);
+    last = now;
+    advance(dt);
+    requestAnimationFrame(loop);
+  }
+
+  buildMesh(N);
+  draw();
+  requestAnimationFrame(loop);
+
+  window.__boy = {
+    boyPoint: boyPoint, squareToDisk: squareToDisk,
+    mesh: function () { return mesh; },
+    snake: snake, stepCell: stepCell, cellCenter: cellCenter,
+    setSnakeMode: setSnakeMode, GRID: GRID, tick: snakeTick,
+    setSnakeLength: setSnakeLength, setFrozen: setFrozen, growTail: growTail,
+    advance: advance
+  };
+})();
+</script>
+</body>
+</html>

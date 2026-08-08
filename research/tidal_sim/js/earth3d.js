@@ -6,6 +6,19 @@ import { divergingColor, LAND_COLOR } from "./colormap.js";
 // covers the simulated latitude band (+-75 here); the rest is padded with
 // a neutral "land" gray, consistent with the model treating high latitudes
 // as a closed boundary.
+//
+// The ocean surface is real displaced geometry, not just a flat colormap:
+// every vertex is pushed outward along its own radial direction by an
+// amount proportional to eta at that point, then normals are recomputed so
+// lighting actually reveals the bumps. The real amplitude (centimeters to
+// tens of meters, depending on scenario) is invisible against a
+// 6371km-radius sphere, so the displacement is an explicit artistic
+// exaggeration -- MAX_BUMP is what the frame's largest |eta| maps to,
+// scaled the same way per scenario as the color (both driven by the
+// scenario's eta_min/eta_max), not to real physical scale.
+const SPHERE_RADIUS = 5;
+const MAX_BUMP = 0.42; // world units at the scenario's max |eta|
+
 export class EarthView {
   constructor(container, meta, onPick) {
     this.container = container;
@@ -39,22 +52,25 @@ export class EarthView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(this.renderer.domElement);
 
-    // Unlit material: this sphere is a data display, not a lit object --
-    // any specular/diffuse shading would distort the colormap's meaning.
+    // roughness:1/metalness:0 gives near-Lambertian shading (no specular
+    // hotspot) -- enough to read the bumps via lighting without the washed
+    // -out glare a shinier material produced in an earlier version.
     this.texture = new THREE.CanvasTexture(this.canvas);
     this.texture.minFilter = THREE.LinearFilter;
 
-    const geo = new THREE.SphereGeometry(5, 96, 64);
-    const mat = new THREE.MeshBasicMaterial({ map: this.texture });
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.85);
+    dl.position.set(6, 4, 6);
+    this.scene.add(dl);
+    const dl2 = new THREE.DirectionalLight(0xffffff, 0.25);
+    dl2.position.set(-5, -2, -4);
+    this.scene.add(dl2);
+
+    const geo = new THREE.SphereGeometry(SPHERE_RADIUS, 128, 80);
+    const mat = new THREE.MeshStandardMaterial({ map: this.texture, roughness: 1, metalness: 0 });
     this.sphere = new THREE.Mesh(geo, mat);
     this.scene.add(this.sphere);
-
-    // thin wireframe graticule for orientation
-    const wire = new THREE.Mesh(
-      new THREE.SphereGeometry(5.01, 24, 16),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.06 })
-    );
-    this.scene.add(wire);
+    this._prepareDisplacement(geo);
 
     this.marker = new THREE.Mesh(
       new THREE.SphereGeometry(0.14, 16, 16),
@@ -89,6 +105,44 @@ export class EarthView {
     }
   }
 
+  // For every geometry vertex, precompute (once) its base outward unit
+  // normal and which data cell it samples -- turns per-frame displacement
+  // into a flat array lookup instead of repeated trig/search.
+  _prepareDisplacement(geo) {
+    const { lat_deg, lon_deg, n_lat, n_lon, H } = this.meta;
+    const dlat = lat_deg[1] - lat_deg[0];
+    const dlon = lon_deg[1] - lon_deg[0];
+    const latLo = lat_deg[0] - dlat / 2, latHi = lat_deg[n_lat - 1] + dlat / 2;
+
+    const pos = geo.attributes.position;
+    const uv = geo.attributes.uv;
+    const n = pos.count;
+    this._basePos = new Float32Array(pos.array); // pristine sphere, radius SPHERE_RADIUS
+    this._baseNormal = new Float32Array(n * 3);
+    this._cellIndex = new Int32Array(n);
+    this._isLand = new Uint8Array(n);
+
+    for (let i = 0; i < n; i++) {
+      const bx = this._basePos[i * 3], by = this._basePos[i * 3 + 1], bz = this._basePos[i * 3 + 2];
+      const r = Math.hypot(bx, by, bz) || 1;
+      this._baseNormal[i * 3] = bx / r;
+      this._baseNormal[i * 3 + 1] = by / r;
+      this._baseNormal[i * 3 + 2] = bz / r;
+
+      const lonDeg = uv.getX(i) * 360;
+      const latDeg = -90 + uv.getY(i) * 180; // matches the pick-conversion convention
+
+      if (latDeg < latLo || latDeg > latHi) {
+        this._isLand[i] = 1;
+        continue;
+      }
+      const row = Math.min(n_lat - 1, Math.max(0, Math.round((latDeg - lat_deg[0]) / dlat)));
+      const col = ((Math.round((((lonDeg % 360) + 360) % 360) / dlon) % n_lon) + n_lon) % n_lon;
+      this._cellIndex[i] = row * n_lon + col;
+      this._isLand[i] = H[row][col] <= 0 ? 1 : 0;
+    }
+  }
+
   setFrame(etaFrame) {
     const { n_lat, n_lon, H } = this.meta;
     const vmax = Math.max(Math.abs(this.meta.eta_min), Math.abs(this.meta.eta_max)) || 1e-6;
@@ -112,10 +166,32 @@ export class EarthView {
     }
     this.ctx.putImageData(this.imgData, 0, 0);
     this.texture.needsUpdate = true;
+
+    // Real surface displacement: push each ocean vertex outward along its
+    // own radial direction by eta/vmax * MAX_BUMP, then recompute normals
+    // so the lighting set up in the constructor actually reveals the bumps
+    // (displacing position alone, with stale normals, would look flat).
+    const posAttr = this.sphere.geometry.attributes.position;
+    const n = posAttr.count;
+    for (let i = 0; i < n; i++) {
+      let bump = 0;
+      if (!this._isLand[i]) {
+        bump = (etaFrame[this._cellIndex[i]] / vmax) * MAX_BUMP;
+      }
+      const radius = SPHERE_RADIUS + bump;
+      posAttr.setXYZ(
+        i,
+        this._baseNormal[i * 3] * radius,
+        this._baseNormal[i * 3 + 1] * radius,
+        this._baseNormal[i * 3 + 2] * radius,
+      );
+    }
+    posAttr.needsUpdate = true;
+    this.sphere.geometry.computeVertexNormals();
   }
 
   setMarker(latDeg, lonDeg) {
-    const r = 5.05;
+    const r = SPHERE_RADIUS + MAX_BUMP + 0.12; // always clear of the tallest possible bump
     const phi = THREE_deg2rad(90 - latDeg);
     const theta = THREE_deg2rad(lonDeg);
     const x = -r * Math.sin(phi) * Math.cos(theta);

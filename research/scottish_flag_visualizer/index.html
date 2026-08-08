@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Scottish Flag Spectral Lab</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Discrete Mathieu operator</p>
+        <h1>Scottish Flag Spectral Lab</h1>
+      </div>
+      <div class="header-actions">
+        <details class="view-picker" id="view-picker">
+          <summary><span id="view-count">3 views</span></summary>
+          <fieldset>
+            <legend>Visible windows</legend>
+            <label><input type="checkbox" data-view-toggle="parameters" checked> Parameters</label>
+            <label><input type="checkbox" data-view-toggle="spectrum" checked> Spectrum</label>
+            <label><input type="checkbox" data-view-toggle="momentum" checked> Momentum</label>
+            <label><input type="checkbox" data-view-toggle="explanation"> Explanation</label>
+            <label><input type="checkbox" data-view-toggle="contour"> Contour lift</label>
+            <label><input type="checkbox" data-view-toggle="surface"> 3D spectral curve</label>
+            <label><input type="checkbox" data-view-toggle="branch"> Branched cover</label>
+            <label><input type="checkbox" data-view-toggle="projections"> Amoeba / coamoeba</label>
+          </fieldset>
+        </details>
+        <div class="formula" aria-label="Finite periodic operator">
+          H<sup>N</sup><sub>p₀,x₀,λ</sub>
+        </div>
+      </div>
+    </header>
+
+    <div class="tiled-workspace">
+    <main class="window" id="spectrum-window">
+      <section class="controls" id="parameters-view" aria-label="Operator parameters">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Window 1</p>
+            <h2>Parameters</h2>
+          </div>
+          <span id="compute-status" class="status" aria-live="polite">Ready</span>
+        </div>
+
+        <div class="complex-grid">
+          <section class="complex-control" data-complex-control="lambda">
+            <div class="control-heading">
+              <h3>λ</h3>
+              <output id="lambda-display">1.000 + 0.400i</output>
+            </div>
+            <canvas class="complex-pad" id="lambda-pad" width="420" height="420"
+              tabindex="0" role="application"
+              aria-label="Complex lambda plane. Drag to set real and imaginary parts."></canvas>
+            <div class="number-row">
+              <label>Re <input id="lambda-re" type="number" min="-3" max="3" step="0.01" value="1"></label>
+              <label>Im <input id="lambda-im" type="number" min="-3" max="3" step="0.01" value="0.4"></label>
+            </div>
+          </section>
+
+          <section class="complex-control" data-complex-control="p0">
+            <div class="control-heading">
+              <h3>p₀</h3>
+              <output id="p0-display">0.000</output>
+            </div>
+            <canvas class="complex-pad" id="p0-pad" width="420" height="420"
+              tabindex="0" role="application"
+              aria-label="Complex p zero plane. Drag to set real and imaginary parts."></canvas>
+            <div class="number-row">
+              <label>Re <input id="p0-re" type="number" min="-3.1416" max="3.1416" step="0.01" value="0"></label>
+              <label>Im <input id="p0-im" type="number" min="-3" max="3" step="0.01" value="0"></label>
+            </div>
+          </section>
+
+          <section class="complex-control" data-complex-control="x0">
+            <div class="control-heading">
+              <h3>x₀</h3>
+              <output id="x0-display">0.000</output>
+            </div>
+            <canvas class="complex-pad" id="x0-pad" width="420" height="420"
+              tabindex="0" role="application"
+              aria-label="Complex x zero plane. Drag to set real and imaginary parts."></canvas>
+            <div class="number-row">
+              <label>Re <input id="x0-re" type="number" min="-3.1416" max="3.1416" step="0.01" value="0"></label>
+              <label>Im <input id="x0-im" type="number" min="-3" max="3" step="0.01" value="0"></label>
+            </div>
+          </section>
+        </div>
+
+        <section class="n-control">
+          <div class="control-heading">
+            <label for="n-slider"><strong>N</strong></label>
+            <output id="n-display" for="n-slider">24</output>
+          </div>
+          <input id="n-slider" type="range" min="3" max="200" step="1" value="24">
+          <div class="range-labels"><span>3</span><span>200</span></div>
+          <div class="control-actions">
+            <label class="toggle-control" for="show-eigenvalues">
+              <input id="show-eigenvalues" type="checkbox" checked>
+              <span>Show eigenvalues</span>
+            </label>
+            <button id="reset-phases" class="secondary-button" type="button">Reset p₀ and x₀</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="plot-panel" id="spectrum-view" aria-label="Spectrum in the complex energy plane">
+        <div class="plot-heading">
+          <div>
+            <p class="eyebrow">Complex energy plane</p>
+            <h2>Spec(H<sup>N</sup><sub>p₀,x₀,λ</sub>)</h2>
+          </div>
+          <div class="legend" aria-label="Plot legend">
+            <span id="eigenvalue-legend"><i class="legend-dot"></i> Eigenvalues</span>
+            <span><i class="legend-line"></i> Σ<sub>λ</sub></span>
+            <span><i class="legend-energy"></i> E</span>
+          </div>
+        </div>
+        <div class="plot-wrap" id="plot-wrap">
+          <svg id="spectrum-plot" role="img" aria-labelledby="plot-title plot-description">
+            <title id="plot-title">Spectrum and Sigma lambda parallelogram</title>
+            <desc id="plot-description">Eigenvalues of the finite periodic discrete Mathieu operator plotted in the complex energy plane.</desc>
+          </svg>
+          <div id="plot-tooltip" class="plot-tooltip" hidden></div>
+        </div>
+        <div class="plot-footer">
+          <output id="point-detail">Drag E in the energy plane.</output>
+          <output id="energy-display">E = 0.500 + 0.500i</output>
+          <output id="timing-detail"></output>
+        </div>
+      </section>
+    </main>
+
+    <main class="momentum-window" id="momentum-window">
+      <section class="momentum-panel" id="momentum-view" aria-label="Complex momentum geometry in the z plane">
+        <div class="plot-heading">
+          <div>
+            <p class="eyebrow">Complex z plane</p>
+            <h2>p(z) = arccos(E − λ cos z)</h2>
+          </div>
+          <div class="legend momentum-legend" aria-label="Momentum plot legend">
+            <span><i class="legend-dotted"></i> Im(E − λ cos z) = 0</span>
+            <span><i class="legend-solid"></i> Im p(z) = 0</span>
+            <span><i class="legend-turning plus"></i> cos p = 1</span>
+            <span><i class="legend-turning minus"></i> cos p = −1</span>
+            <span><i class="legend-flow p-flow"></i> &nabla; Im &int;p dz</span>
+            <span><i class="legend-flow pi-flow"></i> &nabla; Im &int;(&pi; &minus; p) dz</span>
+          </div>
+        </div>
+        <div class="flow-toolbar" aria-label="Momentum flow controls">
+          <label class="toggle-control" for="show-p-flow">
+            <input id="show-p-flow" type="checkbox" checked>
+            <span>Show &nabla; Im &int;p dz</span>
+          </label>
+          <label class="toggle-control" for="show-pi-flow">
+            <input id="show-pi-flow" type="checkbox" checked>
+            <span>Show &nabla; Im &int;(&pi; &minus; p) dz</span>
+          </label>
+        </div>
+        <div class="momentum-canvas-wrap" id="momentum-canvas-wrap">
+          <canvas id="momentum-plot" width="1400" height="720" role="img"
+            aria-label="Momentum contours, turning points, and canonical flow lines in the complex z plane"></canvas>
+          <canvas id="contour-overlay" width="1400" height="720"
+            aria-label="Draw a contour in the complex z plane"></canvas>
+        </div>
+        <div class="contour-toolbar">
+          <button id="draw-contour" class="secondary-button" type="button" aria-pressed="false">Draw contour</button>
+          <button id="clear-contour" class="secondary-button" type="button" disabled>Clear</button>
+          <span id="contour-draw-status">Choose Draw contour, then drag in the z-plane.</span>
+        </div>
+        <div class="plot-footer momentum-footer">
+          <output id="momentum-energy-display">E = 0.500 + 0.500i</output>
+          <output id="momentum-lambda-display">λ = 1.000 + 0.400i</output>
+        </div>
+      </section>
+    </main>
+    </div>
+
+    <section class="curve-lab" id="curve-lab" aria-label="Elliptic spectral curve geometry">
+      <div class="curve-heading">
+        <div>
+          <p class="eyebrow">Elliptic spectral curve</p>
+          <h2>Γ<sub>E</sub>: cos p + λ cos z = E</h2>
+        </div>
+        <div class="curve-key" aria-label="Spectral curve coordinates">
+          <span>space: Re z, −Im z, −Im p</span>
+          <span class="phase-key"><i></i> colour: Re p mod 2π</span>
+        </div>
+      </div>
+
+      <article class="explanation-panel" id="explanation-view" aria-label="Mathematical explanation of the spectral curve">
+        <header>
+          <p class="eyebrow">How to read the geometry</p>
+          <h2>The spectral curve and its logarithmic lift</h2>
+          <p class="explanation-lead">The plots show several projections of one complex one-dimensional—hence real two-dimensional—surface. No single three-dimensional picture preserves all four real coordinates, so the views are linked.</p>
+        </header>
+
+        <div class="explanation-grid">
+          <section>
+            <h3>1. The curve</h3>
+            <p>For fixed \(E\) and \(\lambda\), the classical energy surface is</p>
+            <div class="display-math">
+              \[\Gamma_E=\left\{(z,p)\in(\mathbb C/2\pi\mathbb Z)^2:\ \cos p+\lambda\cos z=E\right\}.\]
+            </div>
+            <p>Exponentiating the angular variables, \(X=e^{iz}\) and \(Y=e^{ip}\), gives the algebraic equation</p>
+            <div class="display-math">
+              \[Y+Y^{-1}+\lambda\bigl(X+X^{-1}\bigr)=2E.\]
+            </div>
+            <p>Its compactification is generically an elliptic curve. The unrestricted logarithmic momentum is the infinite lift \(p\mapsto p+2\pi k\) above this compact quotient.</p>
+          </section>
+
+          <section>
+            <h3>2. Two sheets and turning points</h3>
+            <p>Over a regular point \(z\), choose the principal value</p>
+            <div class="display-math">
+              \[p_{\mathrm{pr}}(z)=\arccos\!\bigl(E-\lambda\cos z\bigr).\]
+            </div>
+            <p>Every momentum above \(z\) is then</p>
+            <div class="display-math">
+              \[p(z)=\pm p_{\mathrm{pr}}(z)+2\pi k,\qquad k\in\mathbb Z.\]
+            </div>
+            <p>The two algebraic sheets meet where \(\sin p=0\), equivalently where \(E-\lambda\cos z=\pm1\). Red points have \(\cos p=1\); blue points have \(\cos p=-1\).</p>
+          </section>
+
+          <section>
+            <h3>3. Lifting a contour</h3>
+            <p>Let \(\gamma:[0,1]\to\mathbb C/2\pi\mathbb Z\) be a contour in the \(z\)-plane. Once \(p(0)\) is chosen, analytic continuation determines a unique continuous lift \((\gamma(s),p(s))\in\Gamma_E\), provided the contour does not pass through a turning point.</p>
+            <p>Numerically, at consecutive samples \(z_j\), the tool chooses the candidate satisfying</p>
+            <div class="display-math">
+              \[p_j=\underset{\sigma=\pm1,\ k\in\mathbb Z}{\operatorname*{argmin}}
+              \left|\sigma p_{\mathrm{pr}}(z_j)+2\pi k-p_{j-1}\right|.\]
+            </div>
+            <p>Thus the plotted lift stays continuous. A blue/orange change only says that its description in the principal \(\arccos\) chart changed.</p>
+          </section>
+
+          <section>
+            <h3>4. What a branch switch means</h3>
+            <p>Near a simple turning point \(z_*\), the local coordinate has square-root form</p>
+            <div class="display-math">
+              \[p-p_*\sim c\sqrt{z-z_*}.\]
+            </div>
+            <p>Going once around \(z_*\) reverses the square root. Consequently, a closed lifted contour has one of the two outcomes</p>
+            <div class="display-math">
+              \[p(1)=p(0)+2\pi k\qquad\text{or}\qquad p(1)=-p(0)+2\pi k.\]
+            </div>
+            <p>The second relation is a genuine sheet exchange. Encircling one simple turning point produces it; encircling two generally returns to the original sheet.</p>
+          </section>
+
+          <section>
+            <h3>5. The elliptic double cover</h3>
+            <p>With \(t=\cos z\) and \(q=\sin z\sin p\), the same curve becomes</p>
+            <div class="display-math">
+              \[q^2=(1-t^2)\left(1-(E-\lambda t)^2\right).\]
+            </div>
+            <p>It is a two-sheeted cover of the \(t\)-sphere branched over</p>
+            <div class="display-math">
+              \[-1,\quad 1,\quad \frac{E-1}{\lambda},\quad \frac{E+1}{\lambda}.\]
+            </div>
+            <p>Four distinct branch points give genus one. At \(E=\pm1\pm\lambda\), two collide and one cycle pinches; these are precisely the four corners of \(\Sigma_\lambda\).</p>
+            <p>The two displayed copies are the \(q=\pm\sqrt{(1-t^2)(1-(E-\lambda t)^2)}\) sheets relative to the drawn cuts. They are not the same labels as \(\pm p_{\mathrm{pr}}\). A lifted path changes displayed copy exactly when its \(t\)-projection crosses a dotted cut.</p>
+          </section>
+
+          <section>
+            <h3>6. Reading the linked windows</h3>
+            <ul>
+              <li><strong>\(z\)-plane:</strong> dotted curves satisfy \(\operatorname{Im}(E-\lambda\cos z)=0\); orange subarcs have real momentum. Solid green arrows follow \((\operatorname{Im}p,\operatorname{Re}p)\), and dashed purple arrows follow \((-\operatorname{Im}p,\pi-\operatorname{Re}p)\). Along every flow line, momentum is analytically continued to the nearest lift \(\pm p_{\mathrm{pr}}+2\pi k\). The drawn contour is coloured by its current principal-sheet label.</li>
+              <li><strong>\(p\)-plane and trace:</strong> these show the continuous lifted momentum. Purple dashed lines mark chart relabellings.</li>
+              <li><strong>3D + colour:</strong> space records \((\operatorname{Re}z,-\operatorname{Im}z,-\operatorname{Im}p)\), while colour records \(\operatorname{Re}p\bmod2\pi\).</li>
+              <li><strong>Branched cover:</strong> the lifted contour moves between two copies of the \(t\)-plane when it crosses a cut.</li>
+              <li><strong>Amoeba/coamoeba:</strong> these are the exact projections \((-\operatorname{Im}z,-\operatorname{Im}p)\) and \((\operatorname{Re}z,\operatorname{Re}p)\bmod2\pi\).</li>
+            </ul>
+          </section>
+        </div>
+
+        <footer class="explanation-footer">
+          Differentiating the logarithmic actions produces the holomorphic elliptic differential
+          \[\Omega=-\frac{dz}{\sin p}=\frac{dt}{q},\qquad
+          \frac{\partial P}{\partial E}=\oint_A\Omega,\qquad
+          \frac{\partial Z}{\partial E}=\oint_B\Omega.\]
+          The two independent cycles of the elliptic curve are therefore the geometric source of the two actions \(P\) and \(Z\).
+        </footer>
+      </article>
+
+      <section class="contour-lift-panel" id="contour-view" aria-label="Analytic continuation of momentum along a contour">
+        <div class="contour-explanation">
+          <div>
+            <p class="eyebrow">Lift a z-contour to Γ<sub>E</sub></p>
+            <h3>Follow one continuous value of p</h3>
+          </div>
+          <ol>
+            <li>Above each z lie the values <span class="math-inline">±p₀(z) + 2πk</span>.</li>
+            <li>Choose the starting value of p; continuation then follows the nearest value at each new point.</li>
+            <li>The lifted p stays continuous. Blue/orange changes and purple dashed lines only mark a relabelling of the principal chart.</li>
+            <li>A closed loop around one turning point returns on the other sheet; a loop around two returns to the original sheet.</li>
+          </ol>
+        </div>
+        <div class="lift-grid">
+          <div class="lift-plot-wrap">
+            <canvas id="p-lift-plot" width="700" height="390" role="img"
+              aria-label="Lifted contour in the complex momentum plane"></canvas>
+            <span class="projection-label">Lifted contour in the p-plane</span>
+          </div>
+          <div class="lift-plot-wrap">
+            <canvas id="p-trace-plot" width="700" height="390" role="img"
+              aria-label="Real and imaginary momentum along the contour"></canvas>
+            <span class="projection-label">p along normalized contour length s</span>
+          </div>
+        </div>
+        <div class="contour-scrubber">
+          <label for="contour-progress">Point on contour</label>
+          <input id="contour-progress" type="range" min="0" max="1000" value="0" disabled>
+          <output id="lifted-point-detail">No contour drawn.</output>
+        </div>
+      </section>
+
+      <div class="curve-grid" id="curve-grid">
+        <section class="curve-panel surface-panel" id="surface-view" aria-label="Three dimensional spectral curve projection">
+          <div class="curve-panel-heading">
+            <div>
+              <p class="eyebrow">3D + phase</p>
+              <h3>Two momentum sheets</h3>
+            </div>
+            <button id="reset-curve-view" class="secondary-button" type="button">Reset view</button>
+          </div>
+          <canvas id="curve-surface" width="1100" height="660" role="img"
+            aria-label="Projection of both sheets of the spectral curve. Drag to rotate."></canvas>
+          <div class="curve-footer">
+            <span>Drag to rotate · wheel to zoom</span>
+            <output id="curve-point-detail">Y = e<sup>ip</sup>; branch points occur at Y = ±1.</output>
+          </div>
+        </section>
+
+        <div class="curve-side-stack" id="curve-side-stack">
+          <section class="curve-panel branch-panel" id="branch-view" aria-label="Branched double cover of the t plane">
+            <div class="curve-panel-heading">
+              <div>
+                <p class="eyebrow">t = cos z</p>
+                <h3>Two-sheeted branched cover</h3>
+              </div>
+              <output id="curve-fiber-status">Smooth genus-one fiber</output>
+            </div>
+            <canvas id="branch-cover" width="900" height="430" role="img"
+              aria-label="Two copies of the t plane joined along branch cuts"></canvas>
+            <div class="curve-footer">
+              <output id="branch-detail"></output>
+            </div>
+          </section>
+
+          <section class="curve-panel projection-panel" id="projections-view" aria-label="Amoeba and coamoeba projections">
+            <div class="curve-panel-heading">
+              <div>
+                <p class="eyebrow">Two exact projections</p>
+                <h3>Amoeba and coamoeba</h3>
+              </div>
+              <div class="sheet-legend"><span><i class="sheet-plus"></i> +p</span><span><i class="sheet-minus"></i> −p</span></div>
+            </div>
+            <div class="projection-grid">
+              <div>
+                <canvas id="amoeba-plot" width="440" height="330" role="img"
+                  aria-label="Amoeba projection log absolute X versus log absolute Y"></canvas>
+                <span class="projection-label">(−Im z, −Im p)</span>
+              </div>
+              <div>
+                <canvas id="coamoeba-plot" width="440" height="330" role="img"
+                  aria-label="Coamoeba projection argument X versus argument Y"></canvas>
+                <span class="projection-label">(Re z, Re p) mod 2π</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"]],
+        displayMath: [["\\[", "\\]"]],
+      },
+      svg: { fontCache: "global" },
+    };
+  </script>
+  <script src="./vendor/mathjax-tex-svg.js"></script>
+  <script src="./views.js"></script>
+  <script src="./spectrum.js"></script>
+  <script src="./curve.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
